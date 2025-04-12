@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Logs - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Activity Logs</h1>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Filter Logs</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="action" class="form-label">Action</label>
+                <select name="action" id="action" class="form-select">
+                    <option value="">All Actions</option>
+                    {% for action_code, action_name in action_choices %}
+                        <option value="{{ action_code }}" {% if filter_action == action_code %}selected{% endif %}>{{ action_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="user" class="form-label">User</label>
+                <select name="user" id="user" class="form-select">
+                    <option value="">All Users</option>
+                    {% for user in admin_users %}
+                        <option value="{{ user.username }}" {% if filter_user == user.username %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_start" class="form-label">Date From</label>
+                <input type="date" name="date_start" id="date_start" class="form-control" value="{{ filter_date_start }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_end" class="form-label">Date To</label>
+                <input type="date" name="date_end" id="date_end" class="form-control" value="{{ filter_date_end }}">
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="{% url 'administration:activity_logs' %}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-history"></i> Activity Logs</h5>
+    </div>
+    <div class="card-body">
+        {% if logs %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Object Type</th>
+                            <th>Object ID</th>
+                            <th>Details</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            <tr>
+                                <td>{{ log.timestamp }}</td>
+                                <td>{{ log.admin.username }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if log.action == 'CREATE' %}bg-success
+                                        {% elif log.action == 'UPDATE' %}bg-primary
+                                        {% elif log.action == 'DELETE' %}bg-danger
+                                        {% elif log.action == 'IMPORT' %}bg-info
+                                        {% elif log.action == 'EXPORT' %}bg-info
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ log.action }}
+                                    </span>
+                                </td>
+                                <td>{{ log.object_type }}</td>
+                                <td>{{ log.object_id|default:"-" }}</td>
+                                <td>
+                                    <span class="text-truncate d-inline-block" style="max-width: 300px;">{{ log.details|default:"-" }}</span>
+                                </td>
+                                <td>{{ log.ip_address|default:"-" }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No activity logs found.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Import Students - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Import Students</h1>
+    <a href="{% url 'administration:student_list' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Students
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-file-upload"></i> Upload CSV File</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'administration:import_students' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="csv_file" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="csv_file" name="csv_file" accept=".csv" required>
+                        <div class="form-text">
+                            CSV file must include columns: roll_number, first_name, last_name
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-4 bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">CSV Format</h6>
+                            <p class="small">Your CSV file should look like this:</p>
+                            <pre class="bg-white p-2 border rounded"><code>roll_number,first_name,last_name
+S12345,John,Doe
+S12346,Jane,Smith
+...</code></pre>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Import Students
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Import History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for log in import_logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ log.filename }}</h6>
+                                    <small class="text-muted">{{ log.import_date|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <span class="badge {% if log.status == 'COMPLETED' %}bg-success{% elif log.status == 'FAILED' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ log.status }}
+                                </span>
+                            </div>
+                            <div class="mt-2 small">
+                                <span class="text-success">{{ log.records_imported }}</span> imported, 
+                                <span class="text-danger">{{ log.records_failed }}</span> failed
+                                of {{ log.records_total }} records
+                            </div>
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <p class="text-muted mb-0">No import history found.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

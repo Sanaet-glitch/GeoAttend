@@ -1,0 +1,226 @@
+{% extends 'base.html' %}
+
+{% block title %}Mark Attendance - {{ session.course }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    #locationStatus {
+        display: none;
+    }
+    .loader {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 2s linear infinite;
+        display: inline-block;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Mark Attendance</h4>
+            </div>
+            <div class="card-body">
+                <h5 class="card-title">{{ session.course.title }}</h5>
+                <h6 class="card-subtitle mb-3 text-muted">{{ session.title }}</h6>
+                
+                <div id="attendanceForm">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> Please enter your roll number and allow location access to mark your attendance.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="rollNumber" class="form-label">Roll Number</label>
+                        <input type="text" class="form-control" id="rollNumber" required>
+                    </div>
+                    
+                    <div class="alert alert-warning" id="locationStatus">
+                        <div class="loader"></div>
+                        <span id="locationMessage">Requesting location access...</span>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="button" id="markAttendance" class="btn btn-primary">
+                            <i class="fas fa-map-marker-alt"></i> Mark Attendance
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="attendanceResult" style="display: none">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Store session data
+    const sessionKey = "{{ session.session_key }}";
+    let userLocation = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        const markButton = document.getElementById('markAttendance');
+        markButton.addEventListener('click', markAttendance);
+    });
+    
+    function markAttendance() {
+        // Show location status
+        const locationStatus = document.getElementById('locationStatus');
+        const locationMessage = document.getElementById('locationMessage');
+        locationStatus.style.display = 'block';
+        
+        // Get roll number
+        const rollNumber = document.getElementById('rollNumber').value.trim();
+        if (!rollNumber) {
+            showError('Please enter your roll number');
+            return;
+        }
+        
+        // Request location
+        if (navigator.geolocation) {
+            locationMessage.textContent = "Getting your location...";
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    // Get coordinates
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    
+                    // Store location data
+                    userLocation = { latitude, longitude };
+                    
+                    // Submit attendance
+                    submitAttendance(rollNumber, latitude, longitude);
+                },
+                function(error) {
+                    // Handle location error
+                    let errorMsg;
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = "You denied the request for location. Please allow location access and try again.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = "Location information is unavailable. Please try again.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = "The request to get your location timed out. Please try again.";
+                            break;
+                        default:
+                            errorMsg = "An unknown error occurred while getting your location.";
+                            break;
+                    }
+                    showError(errorMsg);
+                },
+                { maximumAge: 60000, timeout: 10000, enableHighAccuracy: true }
+            );
+        } else {
+            showError("Geolocation is not supported by your browser. Please use a modern browser.");
+        }
+    }
+    
+    function submitAttendance(rollNumber, latitude, longitude) {
+        const locationMessage = document.getElementById('locationMessage');
+        locationMessage.textContent = "Submitting attendance...";
+        
+        // Prepare data for submission
+        const data = {
+            roll_number: rollNumber,
+            latitude: latitude,
+            longitude: longitude
+        };
+        
+        // Get CSRF token from cookies
+        const csrftoken = getCookie('csrftoken');
+        
+        // Submit attendance
+        fetch(`/api/attendance/submit/${sessionKey}/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccess(data);
+            } else {
+                showError(data.message);
+            }
+        })
+        .catch(error => {
+            showError(`Error: ${error.message}`);
+        });
+    }
+    
+    function showSuccess(data) {
+        const attendanceForm = document.getElementById('attendanceForm');
+        const attendanceResult = document.getElementById('attendanceResult');
+        
+        // Hide form
+        attendanceForm.style.display = 'none';
+        
+        // Show result
+        attendanceResult.innerHTML = `
+            <div class="text-center mb-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
+            </div>
+            <h4 class="text-center mb-3">Attendance Marked Successfully</h4>
+            ${data.verified ? 
+                `<div class="alert alert-success">
+                    <i class="fas fa-map-marker-alt"></i> Location verified: You are 
+                    ${data.distance.toFixed(1)} meters from the class.
+                </div>`
+                :
+                `<div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> Location warning: You are 
+                    ${data.distance.toFixed(1)} meters from the class, which is outside the allowed radius.
+                    Your attendance has been flagged for review.
+                </div>`
+            }
+            <div class="text-center mt-4">
+                <p>You can close this window now.</p>
+            </div>
+        `;
+        attendanceResult.style.display = 'block';
+    }
+    
+    function showError(message) {
+        const locationStatus = document.getElementById('locationStatus');
+        locationStatus.className = 'alert alert-danger';
+        locationStatus.innerHTML = `<i class="fas fa-exclamation-circle"></i> ${message}`;
+    }
+    
+    // Helper function to get CSRF token from cookies
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

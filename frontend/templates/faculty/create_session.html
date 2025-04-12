@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Session - GeoAttend{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Create Class Session</h1>
+    <div>
+        <a href="{% url 'faculty:session_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Sessions
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Session Details</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'faculty:create_session' %}">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="course" class="form-label">Course *</label>
+                    <select name="course" id="course" class="form-select" required>
+                        <option value="">Select Course</option>
+                        {% for course in courses %}
+                            <option value="{{ course.id }}">{{ course.course_code }}: {{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="title" class="form-label">Session Title *</label>
+                    <input type="text" class="form-control" id="title" name="title" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="date" class="form-label">Date *</label>
+                    <input type="date" class="form-control" id="date" name="date" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="start_time" class="form-label">Start Time *</label>
+                    <input type="time" class="form-control" id="start_time" name="start_time" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="end_time" class="form-label">End Time *</label>
+                    <input type="time" class="form-control" id="end_time" name="end_time" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Location *</label>
+                <p class="text-muted small">Click on the map to set the class location or use the "Get Current Location" button.</p>
+                <div id="map" class="mb-2"></div>
+                
+                <div class="d-grid mb-3">
+                    <button type="button" id="getCurrentLocation" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt"></i> Get Current Location
+                    </button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="latitude" class="form-label">Latitude *</label>
+                        <input type="text" class="form-control" id="latitude" name="latitude" required readonly>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="longitude" class="form-label">Longitude *</label>
+                        <input type="text" class="form-control" id="longitude" name="longitude" required readonly>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <label for="allowed_radius" class="form-label">Allowed Radius (meters) *</label>
+                <input type="number" class="form-control" id="allowed_radius" name="allowed_radius" min="10" max="500" value="100" required>
+                <div class="form-text">
+                    Students must be within this radius of the class location to be verified.
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Create Session
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    let map;
+    let marker;
+    
+    // Initialize the map
+    function initMap() {
+        // Default location (New York City)
+        const defaultLocation = [40.712776, -74.005974];
+        
+        // Create map
+        map = L.map('map').setView(defaultLocation, 15);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Create marker
+        marker = L.marker(defaultLocation, {
+            draggable: true
+        }).addTo(map);
+        
+        // Update coordinates when marker is dragged
+        marker.on('dragend', function() {
+            const position = marker.getLatLng();
+            updateCoordinates(position);
+        });
+        
+        // Set marker when map is clicked
+        map.on('click', function(event) {
+            marker.setLatLng(event.latlng);
+            updateCoordinates(event.latlng);
+        });
+    }
+    
+    // Update coordinates in form fields
+    function updateCoordinates(position) {
+        document.getElementById('latitude').value = position.lat.toFixed(6);
+        document.getElementById('longitude').value = position.lng.toFixed(6);
+    }
+    
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        
+        // Get current location button
+        document.getElementById('getCurrentLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        map.setView([lat, lng], 15);
+                        marker.setLatLng([lat, lng]);
+                        updateCoordinates({lat: lat, lng: lng});
+                    },
+                    function(error) {
+                        let errorMsg;
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = "You denied the request for location. Please allow location access and try again.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = "Location information is unavailable. Please try again.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = "The request to get your location timed out. Please try again.";
+                                break;
+                            default:
+                                errorMsg = "An unknown error occurred while getting your location.";
+                                break;
+                        }
+                        alert(errorMsg);
+                    }
+                );
+            } else {
+                alert("Error: Your browser doesn't support geolocation.");
+            }
+        });
+    });
+</script>
+{% endblock %}

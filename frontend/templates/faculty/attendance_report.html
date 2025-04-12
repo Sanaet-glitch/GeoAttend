@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Report - {{ session.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3">Attendance Report</h1>
+        <p class="text-muted">{{ session.course.course_code }}: {{ session.title }} ({{ session.date }})</p>
+    </div>
+    <div>
+        <a href="{% url 'faculty:session_detail' session.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Session
+        </a>
+        <button onclick="window.print()" class="btn btn-primary">
+            <i class="fas fa-print"></i> Print Report
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Summary</h5>
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-4">
+                <div class="border rounded p-3 mb-3">
+                    <h2 class="h1">{{ attendance_count }}</h2>
+                    <p class="text-muted mb-0">Total Attendance</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 mb-3">
+                    <h2 class="h1">{{ verified_count }}</h2>
+                    <p class="text-muted mb-0">Verified</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="border rounded p-3 mb-3">
+                    <h2 class="h1">{{ flagged_count }}</h2>
+                    <p class="text-muted mb-0">Flagged</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Attendance Records</h5>
+    </div>
+    <div class="card-body">
+        {% if attendance_records %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="attendanceTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Name</th>
+                            <th>Timestamp</th>
+                            <th>Distance</th>
+                            <th>IP Address</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                            <tr class="{% if record.flagged %}table-warning{% endif %}">
+                                <td>{{ record.student.roll_number }}</td>
+                                <td>{{ record.student.first_name }} {{ record.student.last_name }}</td>
+                                <td>{{ record.timestamp }}</td>
+                                <td>{{ record.distance_from_class|floatformat:2 }} m</td>
+                                <td>{{ record.ip_address }}</td>
+                                <td>
+                                    {% if record.is_verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Not Verified</span>
+                                    {% endif %}
+                                    
+                                    {% if record.flagged %}
+                                        <span class="badge bg-warning text-dark" title="{{ record.flag_reason }}">
+                                            <i class="fas fa-flag"></i> Flagged
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No attendance records for this session.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const table = document.getElementById('attendanceTable');
+        if (table) {
+            // Add CSV export functionality
+            const exportBtn = document.createElement('button');
+            exportBtn.className = 'btn btn-sm btn-outline-secondary';
+            exportBtn.innerHTML = '<i class="fas fa-download"></i> Export CSV';
+            exportBtn.style.marginBottom = '10px';
+            exportBtn.onclick = function() {
+                exportTableToCSV('attendance_report.csv');
+            };
+            
+            table.parentNode.insertBefore(exportBtn, table);
+        }
+    });
+    
+    function exportTableToCSV(filename) {
+        const table = document.getElementById('attendanceTable');
+        const rows = table.querySelectorAll('tr');
+        const csvContent = [];
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = [], cols = rows[i].querySelectorAll('td, th');
+            
+            for (let j = 0; j < cols.length; j++) {
+                // Get text content and remove any badges
+                let content = cols[j].innerText.trim();
+                
+                // Handle status column (last column) specially
+                if (j === cols.length - 1 && i > 0) {
+                    const isVerified = cols[j].querySelector('.badge-success') !== null;
+                    const isFlagged = cols[j].querySelector('.badge-warning') !== null;
+                    content = isVerified ? 'Verified' : 'Not Verified';
+                    if (isFlagged) content += ' (Flagged)';
+                }
+                
+                // Quote the content if it contains commas
+                if (content.includes(',')) {
+                    content = `"${content.replace(/"/g, '""')}"`;
+                }
+                
+                row.push(content);
+            }
+            
+            csvContent.push(row.join(','));
+        }
+        
+        // Create and download the CSV file
+        const csvString = csvContent.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+{% endblock %}

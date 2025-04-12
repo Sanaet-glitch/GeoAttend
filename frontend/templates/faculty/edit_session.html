@@ -1,0 +1,201 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Session - {{ session.title }}{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Edit Session</h1>
+    <div>
+        <a href="{% url 'faculty:session_detail' session.id %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Session
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-edit"></i> Session Details</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" action="{% url 'faculty:edit_session' session.id %}">
+            {% csrf_token %}
+            
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label for="course" class="form-label">Course</label>
+                    <input type="text" class="form-control" value="{{ session.course.course_code }}: {{ session.course.title }}" readonly>
+                </div>
+                
+                <div class="col-md-6">
+                    <label for="title" class="form-label">Session Title *</label>
+                    <input type="text" class="form-control" id="title" name="title" value="{{ session.title }}" required>
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-md-4">
+                    <label for="date" class="form-label">Date *</label>
+                    <input type="date" class="form-control" id="date" name="date" value="{{ session.date|date:'Y-m-d' }}" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="start_time" class="form-label">Start Time *</label>
+                    <input type="time" class="form-control" id="start_time" name="start_time" value="{{ session.start_time|time:'H:i' }}" required>
+                </div>
+                
+                <div class="col-md-4">
+                    <label for="end_time" class="form-label">End Time *</label>
+                    <input type="time" class="form-control" id="end_time" name="end_time" value="{{ session.end_time|time:'H:i' }}" required>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Location *</label>
+                <p class="text-muted small">Click on the map to change the class location.</p>
+                <div id="map" class="mb-2"></div>
+                
+                <div class="d-grid mb-3">
+                    <button type="button" id="getCurrentLocation" class="btn btn-outline-primary">
+                        <i class="fas fa-map-marker-alt"></i> Get Current Location
+                    </button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="latitude" class="form-label">Latitude *</label>
+                        <input type="text" class="form-control" id="latitude" name="latitude" value="{{ session.latitude }}" required readonly>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label for="longitude" class="form-label">Longitude *</label>
+                        <input type="text" class="form-control" id="longitude" name="longitude" value="{{ session.longitude }}" required readonly>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="allowed_radius" class="form-label">Allowed Radius (meters) *</label>
+                <input type="number" class="form-control" id="allowed_radius" name="allowed_radius" min="10" max="500" value="{{ session.allowed_radius }}" required>
+                <div class="form-text">
+                    Students must be within this radius of the class location to be verified.
+                </div>
+            </div>
+            
+            <div class="mb-4">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if session.is_active %}checked{% endif %}>
+                    <label class="form-check-label" for="is_active">Session Active</label>
+                </div>
+                <div class="form-text">
+                    Inactive sessions will not accept new attendance marks.
+                </div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i> Update Session
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+    let map;
+    let marker;
+    
+    // Initialize the map
+    function initMap() {
+        // Session location
+        const sessionLocation = [{{ session.latitude }}, {{ session.longitude }}];
+        
+        // Create map
+        map = L.map('map').setView(sessionLocation, 15);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Create marker
+        marker = L.marker(sessionLocation, {
+            draggable: true
+        }).addTo(map);
+        
+        // Update coordinates when marker is dragged
+        marker.on('dragend', function() {
+            const position = marker.getLatLng();
+            updateCoordinates(position);
+        });
+        
+        // Set marker when map is clicked
+        map.on('click', function(event) {
+            marker.setLatLng(event.latlng);
+            updateCoordinates(event.latlng);
+        });
+    }
+    
+    // Update coordinates in form fields
+    function updateCoordinates(position) {
+        document.getElementById('latitude').value = position.lat.toFixed(6);
+        document.getElementById('longitude').value = position.lng.toFixed(6);
+    }
+    
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        
+        // Get current location button
+        document.getElementById('getCurrentLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        map.setView([lat, lng], 15);
+                        marker.setLatLng([lat, lng]);
+                        updateCoordinates({lat: lat, lng: lng});
+                    },
+                    function(error) {
+                        let errorMsg;
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMsg = "You denied the request for location. Please allow location access and try again.";
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMsg = "Location information is unavailable. Please try again.";
+                                break;
+                            case error.TIMEOUT:
+                                errorMsg = "The request to get your location timed out. Please try again.";
+                                break;
+                            default:
+                                errorMsg = "An unknown error occurred while getting your location.";
+                                break;
+                        }
+                        alert(errorMsg);
+                    }
+                );
+            } else {
+                alert("Error: Your browser doesn't support geolocation.");
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Sessions - GeoAttend Administration{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Class Sessions</h1>
+    <a href="{% url 'administration:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Filter Sessions</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label for="course" class="form-label">Course</label>
+                <select name="course" id="course" class="form-select">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                        <option value="{{ course.course_code }}" {% if filter_course == course.course_code %}selected{% endif %}>
+                            {{ course.course_code }}: {{ course.title }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="faculty" class="form-label">Faculty</label>
+                <select name="faculty" id="faculty" class="form-select">
+                    <option value="">All Faculty</option>
+                    {% for user in faculty_users %}
+                        <option value="{{ user.username }}" {% if filter_faculty == user.username %}selected{% endif %}>
+                            {{ user.get_full_name|default:user.username }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_start" class="form-label">Date From</label>
+                <input type="date" name="date_start" id="date_start" class="form-control" value="{{ filter_date_start }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_end" class="form-label">Date To</label>
+                <input type="date" name="date_end" id="date_end" class="form-control" value="{{ filter_date_end }}">
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+                <a href="{% url 'administration:session_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Sessions</h5>
+    </div>
+    <div class="card-body">
+        {% if sessions %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Title</th>
+                            <th>Course</th>
+                            <th>Faculty</th>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Attendance</th>
+                            <th>Flagged</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for session in sessions %}
+                            <tr>
+                                <td>{{ session.title }}</td>
+                                <td>{{ session.course.course_code }}</td>
+                                <td>{{ session.faculty.get_full_name|default:session.faculty.username }}</td>
+                                <td>{{ session.date }}</td>
+                                <td>{{ session.start_time }} - {{ session.end_time }}</td>
+                                <td>{{ session.attendance_count }}</td>
+                                <td>
+                                    {% if session.flagged_count > 0 %}
+                                        <span class="badge bg-warning text-dark">{{ session.flagged_count }}</span>
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if session.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Closed</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'administration:session_detail' session.id %}" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No sessions found matching your filters.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ session.title }} - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3">{{ session.title }}</h1>
+        <p class="text-muted">{{ session.course.course_code }}: {{ session.course.title }}</p>
+    </div>
+    <div>
+        <a href="{% url 'faculty:edit_session' session.id %}" class="btn btn-secondary">
+            <i class="fas fa-edit"></i> Edit Session
+        </a>
+        <a href="{% url 'faculty:attendance_report' session.id %}" class="btn btn-info">
+            <i class="fas fa-file-alt"></i> Report
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-5 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Session Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Date:</label>
+                    <p>{{ session.date }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Time:</label>
+                    <p>{{ session.start_time }} - {{ session.end_time }}</p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Location:</label>
+                    <p>
+                        Latitude: {{ session.latitude }}<br>
+                        Longitude: {{ session.longitude }}<br>
+                        Allowed Radius: {{ session.allowed_radius }} meters
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Status:</label>
+                    <p>
+                        {% if session.is_active %}
+                            <span class="badge bg-success">Active</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Closed</span>
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Attendance:</label>
+                    <p>
+                        {{ attendance_count }} students
+                        {% if flagged_count > 0 %}
+                            <span class="badge bg-warning text-dark">{{ flagged_count }} flagged</span>
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-7 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-qrcode"></i> Attendance QR Code</h5>
+            </div>
+            <div class="card-body text-center">
+                <div class="mb-3">
+                    <p>Have students scan this QR code to mark attendance</p>
+                </div>
+                
+                <div class="mb-4">
+                    <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code" class="img-fluid" style="max-height: 300px;">
+                </div>
+                
+                <div class="d-grid gap-2 col-md-8 mx-auto">
+                    <a href="#" onclick="window.print()" class="btn btn-primary">
+                        <i class="fas fa-print"></i> Print QR Code
+                    </a>
+                    <button id="fullscreenBtn" class="btn btn-outline-secondary">
+                        <i class="fas fa-expand"></i> Fullscreen QR Code
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Attendance Records</h5>
+    </div>
+    <div class="card-body">
+        {% if attendance_records %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Name</th>
+                            <th>Timestamp</th>
+                            <th>Distance</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                            <tr class="{% if record.flagged %}table-warning{% endif %}">
+                                <td>{{ record.student.roll_number }}</td>
+                                <td>{{ record.student.first_name }} {{ record.student.last_name }}</td>
+                                <td>{{ record.timestamp }}</td>
+                                <td>{{ record.distance_from_class|floatformat:2 }} m</td>
+                                <td>
+                                    {% if record.is_verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Not Verified</span>
+                                    {% endif %}
+                                    
+                                    {% if record.flagged %}
+                                        <span class="badge bg-warning text-dark" title="{{ record.flag_reason }}">
+                                            <i class="fas fa-flag"></i> Flagged
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No attendance records yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Fullscreen QR code functionality
+    document.getElementById('fullscreenBtn').addEventListener('click', function() {
+        // Create fullscreen overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+        overlay.style.zIndex = '9999';
+        overlay.style.display = 'flex';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.flexDirection = 'column';
+        
+        // Create QR code container
+        const qrContainer = document.createElement('div');
+        qrContainer.innerHTML = '<img src="data:image/png;base64,{{ qr_code }}" style="max-height: 80vh; max-width: 80vw;">';
+        
+        // Create close button
+        const closeBtn = document.createElement('button');
+        closeBtn.innerText = 'Close';
+        closeBtn.className = 'btn btn-primary mt-4';
+        closeBtn.addEventListener('click', function() {
+            document.body.removeChild(overlay);
+        });
+        
+        // Add elements to overlay
+        overlay.appendChild(qrContainer);
+        overlay.appendChild(closeBtn);
+        
+        // Add overlay to body
+        document.body.appendChild(overlay);
+        
+        // Also close on ESC key press
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && document.body.contains(overlay)) {
+                document.body.removeChild(overlay);
+            }
+        });
+    });
+</script>
+{% endblock %}

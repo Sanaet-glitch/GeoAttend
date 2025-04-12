@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Session - GeoAttend{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    #map {
+        height: 300px;
+        width: 100%;
+        border-radius: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ...existing content... -->
+{% endblock %}
+
+{% block extra_js %}
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    let map;
+    let marker;
+    
+    // Initialize the map
+    function initMap() {
+        // Default location (can be your campus center)
+        const defaultLocation = [40.712776, -74.005974];
+        
+        // Create map
+        map = L.map('map').setView(defaultLocation, 15);
+        
+        // Add OpenStreetMap tiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Create marker
+        marker = L.marker(defaultLocation, {
+            draggable: true
+        }).addTo(map);
+        
+        // Update coordinates when marker is dragged
+        marker.on('dragend', function() {
+            const position = marker.getLatLng();
+            updateCoordinates(position);
+        });
+        
+        // Set marker when map is clicked
+        map.on('click', function(event) {
+            marker.setLatLng(event.latlng);
+            updateCoordinates(event.latlng);
+        });
+    }
+    
+    // Update coordinates in form fields
+    function updateCoordinates(position) {
+        document.getElementById('latitude').value = position.lat;
+        document.getElementById('longitude').value = position.lng;
+    }
+    
+    // Initialize map when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMap();
+        
+        // Get current location button
+        document.getElementById('getCurrentLocation').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        
+                        map.setView([lat, lng], 15);
+                        marker.setLatLng([lat, lng]);
+                        updateCoordinates({lat: lat, lng: lng});
+                    },
+                    function() {
+                        alert("Error: The Geolocation service failed.");
+                    }
+                );
+            } else {
+                alert("Error: Your browser doesn't support geolocation.");
+            }
+        });
+    });
+</script>
+{% endblock %}

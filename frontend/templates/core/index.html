@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 text-center">
+        <h1 class="display-4 mb-4">Welcome to GeoAttend</h1>
+        <p class="lead mb-5">A modern, GPS-based attendance system that makes attendance tracking simple and secure.</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+                        <h3>Students</h3>
+                        <p>Scan the QR code shown by your faculty to mark attendance. No login required!</p>
+                        <a href="#" class="btn btn-outline-primary">Learn How It Works</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
+                        <h3>Faculty</h3>
+                        <p>Create class sessions, generate QR codes, and track student attendance in real time.</p>
+                        <a href="{% url 'login' %}" class="btn btn-primary">Faculty Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Add System Setting - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Add System Setting</h1>
+    <a href="{% url 'administration:system_settings' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Settings
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-cog"></i> Setting Details</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{% url 'administration:create_setting' %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="setting_key" class="form-label">Setting Key</label>
+                        <input type="text" class="form-control" id="setting_key" name="setting_key" required>
+                        <div class="form-text">
+                            A unique identifier for this setting (e.g., ALLOWED_RADIUS_DEFAULT)
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="setting_value" class="form-label">Setting Value</label>
+                        <textarea class="form-control" id="setting_value" name="setting_value" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="description" class="form-label">Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                        <div class="form-text">
+                            A brief explanation of what this setting controls
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Setting
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

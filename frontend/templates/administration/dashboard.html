@@ -1,0 +1,310 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - GeoAttend{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        transition: transform 0.3s;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Administration Dashboard</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-primary">{{ student_count }}</h3>
+                <p class="text-muted mb-0">Students</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{% url 'administration:student_list' %}" class="btn btn-sm btn-outline-primary">Manage</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-success">{{ faculty_count }}</h3>
+                <p class="text-muted mb-0">Faculty</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{% url 'administration:faculty_list' %}" class="btn btn-sm btn-outline-success">Manage</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-info">{{ course_count }}</h3>
+                <p class="text-muted mb-0">Courses</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{% url 'administration:course_list' %}" class="btn btn-sm btn-outline-info">Manage</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-warning">{{ session_count }}</h3>
+                <p class="text-muted mb-0">Sessions</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="{% url 'administration:session_list' %}" class="btn btn-sm btn-outline-warning">View</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-danger">{{ attendance_count }}</h3>
+                <p class="text-muted mb-0">Attendance</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="#" class="btn btn-sm btn-outline-danger">View</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 col-lg-2 mb-4">
+        <div class="card shadow-sm stat-card h-100">
+            <div class="card-body text-center">
+                <h3 class="display-4 fw-bold text-secondary">{{ flagged_percentage|floatformat:1 }}%</h3>
+                <p class="text-muted mb-0">Flagged</p>
+            </div>
+            <div class="card-footer bg-transparent border-0 text-center">
+                <a href="#" class="btn btn-sm btn-outline-secondary">View</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Recent Sessions</h5>
+                <a href="{% url 'administration:session_list' %}" class="btn btn-sm btn-outline-light">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_sessions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Course</th>
+                                    <th>Faculty</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for session in recent_sessions %}
+                                    <tr>
+                                        <td>{{ session.title }}</td>
+                                        <td>{{ session.course.course_code }}</td>
+                                        <td>{{ session.faculty.get_full_name|default:session.faculty.username }}</td>
+                                        <td>{{ session.date }}</td>
+                                        <td>
+                                            {% if session.is_active %}
+                                                <span class="badge bg-success">Active</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">Closed</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No sessions found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history"></i> Admin Activity</h5>
+                <a href="{% url 'administration:activity_logs' %}" class="btn btn-sm btn-outline-light">View All</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for log in recent_logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-0">{{ log.action }} {{ log.object_type }}</h6>
+                                    <small class="text-muted">{{ log.admin.username }} - {{ log.timestamp|date:"M d, Y H:i" }}</small>
+                                </div>
+                                <span class="badge bg-info">{{ log.action }}</span>
+                            </div>
+                            {% if log.details %}
+                                <small class="text-muted d-block mt-1">{{ log.details|truncatechars:50 }}</small>
+                            {% endif %}
+                        </div>
+                    {% empty %}
+                        <div class="list-group-item text-center py-4">
+                            <p class="text-muted mb-0">No activity logs found.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-clock"></i> Recent Attendance</h5>
+                <a href="#" class="btn btn-sm btn-outline-light">View All</a>
+            </div>
+            <div class="card-body">
+                {% if recent_attendance %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student</th>
+                                    <th>Session</th>
+                                    <th>Timestamp</th>
+                                    <th>Distance</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for record in recent_attendance %}
+                                    <tr class="{% if record.flagged %}table-warning{% endif %}">
+                                        <td>{{ record.student.roll_number }}</td>
+                                        <td>{{ record.session.title }}</td>
+                                        <td>{{ record.timestamp }}</td>
+                                        <td>{{ record.distance_from_class|floatformat:2 }} m</td>
+                                        <td>
+                                            {% if record.is_verified %}
+                                                <span class="badge bg-success">Verified</span>
+                                            {% else %}
+                                                <span class="badge bg-danger">Not Verified</span>
+                                            {% endif %}
+                                            
+                                            {% if record.flagged %}
+                                                <span class="badge bg-warning text-dark">Flagged</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No attendance records found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-tools"></i> Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{% url 'administration:create_faculty' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-user-plus"></i> Add Faculty
+                    </a>
+                    <a href="{% url 'administration:create_course' %}" class="btn btn-outline-info">
+                        <i class="fas fa-book-medical"></i> Add Course
+                    </a>
+                    <a href="{% url 'administration:import_students' %}" class="btn btn-outline-success">
+                        <i class="fas fa-file-upload"></i> Import Students
+                    </a>
+                    <a href="{% url 'administration:system_settings' %}" class="btn btn-outline-secondary">
+                        <i class="fas fa-cogs"></i> System Settings
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-chart-pie"></i> System Overview</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="attendanceChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Sample chart data - in a real app, you'd generate this dynamically
+        const ctx = document.getElementById('attendanceChart').getContext('2d');
+        const attendanceChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Verified', 'Flagged', 'Not Verified'],
+                datasets: [{
+                    data: [
+                        {{ attendance_count|default:0 }} - {{ flagged_attendance|default:0 }}, 
+                        {{ flagged_attendance|default:0 }}, 
+                        0
+                    ],
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.7)',
+                        'rgba(255, 193, 7, 0.7)',
+                        'rgba(220, 53, 69, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    title: {
+                        display: true,
+                        text: 'Attendance Statistics'
+                    }
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}
