@@ -15,6 +15,9 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
+    print("To access the server:")
+    print("1. On the same machine, use http://127.0.0.1:8000/ or http://localhost:8000/.")
+    print("2. On another device in the same network, use http://<your-computer-ip>:8000/ (e.g., http://192.168.1.147:8000/).")
     execute_from_command_line(sys.argv)
 
 

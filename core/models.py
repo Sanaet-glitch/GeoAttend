@@ -49,7 +49,7 @@ class ClassSession(models.Model):
         from django.conf import settings
         
         # Create URL with session key
-        url = f"{settings.BASE_URL}/attendance/mark/{self.session_key}/"
+        url = f"{settings.BASE_URL}/api/attendance/mark/{self.session_key}/"
         
         # Generate QR code
         qr = qrcode.QRCode(
