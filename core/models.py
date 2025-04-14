@@ -40,12 +40,19 @@ class ClassSession(models.Model):
         return f"{self.course} - {self.title} ({self.date})"
     
     def get_qr_code(self):
-        """Generate a QR code for this session"""
+        """Generate a QR code for this session with extra session info"""
         from django.conf import settings
-        
-        # Create URL with session key
-        url = f"{settings.BASE_URL}/api/attendance/mark/{self.session_key}/"
-        
+        import json
+        # Prepare session info
+        session_info = {
+            'session_key': str(self.session_key),
+            'course_code': self.course.course_code,
+            'course_title': self.course.title,
+            'date': self.date.strftime('%Y-%m-%d'),
+            'start_time': self.start_time.strftime('%H:%M'),
+            'url': f"{settings.BASE_URL}/api/attendance/mark/{self.session_key}/"
+        }
+        qr_data = json.dumps(session_info)
         # Generate QR code
         qr = qrcode.QRCode(
             version=1,
@@ -53,10 +60,9 @@ class ClassSession(models.Model):
             box_size=10,
             border=4,
         )
-        qr.add_data(url)
+        qr.add_data(qr_data)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
-        
         # Convert to base64 for embedding in web page
         buffered = BytesIO()
         img.save(buffered, format="PNG")

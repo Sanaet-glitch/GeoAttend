@@ -253,6 +253,29 @@ def student_list(request):
 
 @login_required
 @user_passes_test(is_admin)
+def create_student(request):
+    """Create a new student individually from the admin dashboard"""
+    if request.method == 'POST':
+        admission_number = request.POST.get('admission_number')
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        if not all([admission_number, first_name, last_name]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('administration:create_student')
+        if Student.objects.filter(admission_number=admission_number).exists():
+            messages.error(request, f'Admission number {admission_number} already exists.')
+            return redirect('administration:create_student')
+        Student.objects.create(
+            admission_number=admission_number,
+            first_name=first_name,
+            last_name=last_name
+        )
+        messages.success(request, f'Student {admission_number} created successfully.')
+        return redirect('administration:student_list')
+    return render(request, 'administration/create_student.html')
+
+@login_required
+@user_passes_test(is_admin)
 def import_students(request):
     """Import students from CSV"""
     if request.method == 'POST':
@@ -277,16 +300,16 @@ def import_students(request):
             header = next(reader)  # Skip header row
             
             # Check required columns
-            required_columns = ['roll_number', 'first_name', 'last_name']
+            required_columns = ['admission_number', 'first_name', 'last_name']
             if not all(column in header for column in required_columns):
                 import_log.status = 'FAILED'
-                import_log.error_log = 'Missing required columns. CSV must contain: roll_number, first_name, last_name'
+                import_log.error_log = 'Missing required columns. CSV must contain: admission_number, first_name, last_name'
                 import_log.save()
                 messages.error(request, 'CSV format is invalid. Missing required columns.')
                 return redirect('administration:import_students')
             
             # Get column indexes
-            roll_number_idx = header.index('roll_number')
+            admission_number_idx = header.index('admission_number')
             first_name_idx = header.index('first_name')
             last_name_idx = header.index('last_name')
             
@@ -299,14 +322,14 @@ def import_students(request):
             for row in reader:
                 records_total += 1
                 try:
-                    if len(row) >= max(roll_number_idx, first_name_idx, last_name_idx) + 1:
-                        roll_number = row[roll_number_idx]
+                    if len(row) >= max(admission_number_idx, first_name_idx, last_name_idx) + 1:
+                        admission_number = row[admission_number_idx]
                         first_name = row[first_name_idx]
                         last_name = row[last_name_idx]
                         
                         # Create or update student
                         student, created = Student.objects.update_or_create(
-                            roll_number=roll_number,
+                            admission_number=admission_number,
                             defaults={
                                 'first_name': first_name,
                                 'last_name': last_name
@@ -365,11 +388,11 @@ def export_students(request):
     
     # Write CSV
     writer = csv.writer(response)
-    writer.writerow(['roll_number', 'first_name', 'last_name'])
+    writer.writerow(['admission_number', 'first_name', 'last_name'])
     
     students = Student.objects.all()
     for student in students:
-        writer.writerow([student.roll_number, student.first_name, student.last_name])
+        writer.writerow([student.admission_number, student.first_name, student.last_name])
     
     # Log action
     log_admin_action(

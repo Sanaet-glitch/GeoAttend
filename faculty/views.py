@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.http import JsonResponse, HttpResponseForbidden
 from django.db.models import Count, Q
 from django.contrib import messages
+from django.utils.timezone import now
 
 from core.models import Course, ClassSession
 from attendance.models import AttendanceRecord
@@ -53,6 +54,17 @@ def session_list(request):
     # Get assigned courses
     course_assignments = CourseAssignment.objects.filter(faculty=faculty_profile)
     courses = [assignment.course for assignment in course_assignments]
+    
+    # Improved: Automatically deactivate sessions whose end datetime has passed
+    from datetime import datetime
+    from django.utils.timezone import make_aware
+    now_dt = timezone.now()
+    expired_sessions = ClassSession.objects.filter(is_active=True)
+    for session in expired_sessions:
+        session_end = make_aware(datetime.combine(session.date, session.end_time))
+        if now_dt > session_end:
+            session.is_active = False
+            session.save()
     
     # Filter sessions
     filter_course = request.GET.get('course')
@@ -192,13 +204,10 @@ def edit_session(request, session_id):
         date = request.POST.get('date')
         start_time = request.POST.get('start_time')
         end_time = request.POST.get('end_time')
-        latitude = request.POST.get('latitude')
-        longitude = request.POST.get('longitude')
-        allowed_radius = request.POST.get('allowed_radius')
         is_active = request.POST.get('is_active') == 'on'
         
         # Validate the form
-        if not all([title, date, start_time, end_time, latitude, longitude, allowed_radius]):
+        if not all([title, date, start_time, end_time]):
             messages.error(request, 'Please fill in all required fields')
             return redirect('faculty:edit_session', session_id=session_id)
         
@@ -207,9 +216,6 @@ def edit_session(request, session_id):
         session.date = date
         session.start_time = start_time
         session.end_time = end_time
-        session.latitude = float(latitude)
-        session.longitude = float(longitude)
-        session.allowed_radius = int(allowed_radius)
         session.is_active = is_active
         session.save()
         

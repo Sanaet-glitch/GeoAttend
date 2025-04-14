@@ -56,7 +56,7 @@
                 <table class="table table-hover" id="attendanceTable">
                     <thead class="table-light">
                         <tr>
-                            <th>Roll Number</th>
+                            <th>Admission Number</th>
                             <th>Name</th>
                             <th>Timestamp</th>
                             <th>Distance</th>
@@ -67,7 +67,7 @@
                     <tbody>
                         {% for record in attendance_records %}
                             <tr class="{% if record.flagged %}table-warning{% endif %}">
-                                <td>{{ record.student.roll_number }}</td>
+                                <td>{{ record.student.admission_number }}</td>
                                 <td>{{ record.student.first_name }} {{ record.student.last_name }}</td>
                                 <td>{{ record.timestamp }}</td>
                                 <td>{{ record.distance_from_class|floatformat:2 }} m</td>

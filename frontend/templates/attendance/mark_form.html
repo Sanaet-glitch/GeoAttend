@@ -35,12 +35,12 @@
                 
                 <div id="attendanceForm">
                     <div class="alert alert-info">
-                        <i class="fas fa-info-circle"></i> Please enter your roll number to mark your attendance.
+                        <i class="fas fa-info-circle"></i> Please enter your admission number to mark your attendance.
                     </div>
                     
                     <div class="mb-3">
-                        <label for="rollNumber" class="form-label">Roll Number</label>
-                        <input type="text" class="form-control" id="rollNumber" required>
+                        <label for="admissionNumber" class="form-label">Admission Number</label>
+                        <input type="text" class="form-control" id="admissionNumber" required>
                     </div>
                     
                     <div class="d-grid">
@@ -70,21 +70,21 @@
     });
     
     function markAttendance() {
-        // Get roll number
-        const rollNumber = document.getElementById('rollNumber').value.trim();
-        if (!rollNumber) {
-            showError('Please enter your roll number');
+        // Get admission number
+        const admissionNumber = document.getElementById('admissionNumber').value.trim();
+        if (!admissionNumber) {
+            showError('Please enter your admission number');
             return;
         }
         
         // Submit attendance
-        submitAttendance(rollNumber);
+        submitAttendance(admissionNumber);
     }
     
-    function submitAttendance(rollNumber) {
+    function submitAttendance(admissionNumber) {
         // Prepare data for submission
         const data = {
-            roll_number: rollNumber
+            admission_number: admissionNumber
         };
         
         // Get CSRF token from cookies
