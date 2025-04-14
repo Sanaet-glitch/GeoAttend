@@ -20,7 +20,7 @@ class Course(models.Model):
 
 
 class ClassSession(models.Model):
-    """Model representing a specific class meeting with location data"""
+    """Model representing a specific class meeting"""
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='sessions')
     faculty = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sessions')
     session_key = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -28,11 +28,6 @@ class ClassSession(models.Model):
     date = models.DateField(default=timezone.now)
     start_time = models.TimeField()
     end_time = models.TimeField()
-    
-    # Location data
-    latitude = models.FloatField()
-    longitude = models.FloatField()
-    allowed_radius = models.IntegerField(default=100)  # Radius in meters
     
     # Session status
     is_active = models.BooleanField(default=True)

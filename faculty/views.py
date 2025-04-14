@@ -111,12 +111,8 @@ def create_session(request):
         date = request.POST.get('date')
         start_time = request.POST.get('start_time')
         end_time = request.POST.get('end_time')
-        latitude = request.POST.get('latitude')
-        longitude = request.POST.get('longitude')
-        allowed_radius = request.POST.get('allowed_radius')
         
-        # Validate the form
-        if not all([course_id, title, date, start_time, end_time, latitude, longitude, allowed_radius]):
+        if not all([course_id, title, date, start_time, end_time]):
             messages.error(request, 'Please fill in all required fields')
             return redirect('faculty:create_session')
             
@@ -132,10 +128,7 @@ def create_session(request):
             title=title,
             date=date,
             start_time=start_time,
-            end_time=end_time,
-            latitude=float(latitude),
-            longitude=float(longitude),
-            allowed_radius=int(allowed_radius)
+            end_time=end_time
         )
         
         messages.success(request, f'Session "{title}" created successfully')
@@ -252,3 +245,11 @@ def attendance_report(request, session_id):
     }
     
     return render(request, 'faculty/attendance_report.html', context)
+
+@login_required
+def delete_session(request, session_id):
+    """Delete a specific class session"""
+    session = get_object_or_404(ClassSession, id=session_id, faculty=request.user)
+    session.delete()
+    messages.success(request, 'Session deleted successfully.')
+    return redirect('faculty:session_list')

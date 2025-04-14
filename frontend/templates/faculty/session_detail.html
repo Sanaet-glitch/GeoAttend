@@ -36,15 +36,6 @@
                 </div>
                 
                 <div class="mb-3">
-                    <label class="form-label fw-bold">Location:</label>
-                    <p>
-                        Latitude: {{ session.latitude }}<br>
-                        Longitude: {{ session.longitude }}<br>
-                        Allowed Radius: {{ session.allowed_radius }} meters
-                    </p>
-                </div>
-                
-                <div class="mb-3">
                     <label class="form-label fw-bold">Status:</label>
                     <p>
                         {% if session.is_active %}
