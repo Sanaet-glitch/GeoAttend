@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Enroll in Course - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Course Enrollment</h4>
+                    <div>
+                        <a href="{% url 'attendance:student_attendance' %}" class="btn btn-sm btn-outline-light me-2">
+                            <i class="fas fa-clipboard-check"></i> My Attendance
+                        </a>
+                        <a href="{% url 'attendance:view_enrollments' %}" class="btn btn-sm btn-outline-light">
+                            <i class="fas fa-list"></i> My Courses
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    <p class="text-muted mb-4">Enter your admission number and the enrollment key provided by your lecturer to enroll in a course.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="admission_number" class="form-label">Admission Number</label>
+                            <input type="text" class="form-control" id="admission_number" name="admission_number" required>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="enrollment_key" class="form-label">Enrollment Key</label>
+                            <input type="text" class="form-control" id="enrollment_key" name="enrollment_key" required>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Enroll in Course
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer bg-light text-center">
+                    <small class="text-muted">Already enrolled? <a href="{% url 'attendance:view_enrollments' %}">View your courses</a></small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

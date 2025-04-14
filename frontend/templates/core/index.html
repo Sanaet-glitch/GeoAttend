@@ -13,7 +13,17 @@
                         <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
                         <h3>Students</h3>
                         <p>Scan the QR code shown by your faculty to mark attendance. No login required!</p>
-                        <a href="#" class="btn btn-outline-primary">Learn How It Works</a>
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'attendance:enroll_in_course' %}" class="btn btn-outline-primary">
+                                <i class="fas fa-sign-in-alt"></i> Enroll in a Course
+                            </a>
+                            <a href="{% url 'attendance:view_enrollments' %}" class="btn btn-outline-info">
+                                <i class="fas fa-list"></i> View My Courses
+                            </a>
+                            <a href="{% url 'attendance:student_attendance' %}" class="btn btn-outline-success">
+                                <i class="fas fa-clipboard-check"></i> Check My Attendance
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

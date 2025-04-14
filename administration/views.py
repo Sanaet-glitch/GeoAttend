@@ -25,7 +25,6 @@ def log_admin_action(request, action, object_type, object_id=None, details=None)
         object_type=object_type,
         object_id=str(object_id) if object_id else None,
         details=details,
-        ip_address=request.META.get('REMOTE_ADDR'),
     )
 
 @login_required
@@ -44,20 +43,43 @@ def dashboard(request):
     recent_attendance = AttendanceRecord.objects.order_by('-timestamp')[:10]
     recent_logs = AdminLog.objects.order_by('-timestamp')[:10]
     
-    # Calculate attendance statistics
-    flagged_attendance = AttendanceRecord.objects.filter(flagged=True).count()
-    flagged_percentage = (flagged_attendance / attendance_count * 100) if attendance_count > 0 else 0
-    
+    # Fetch attendance records with optional filters
+    filter_course = request.GET.get('course')
+    filter_faculty = request.GET.get('faculty')
+    filter_date_start = request.GET.get('date_start')
+    filter_date_end = request.GET.get('date_end')
+
+    attendance_records = AttendanceRecord.objects.select_related('student', 'session')
+
+    if filter_course:
+        attendance_records = attendance_records.filter(session__course__course_code=filter_course)
+
+    if filter_faculty:
+        attendance_records = attendance_records.filter(session__faculty__username=filter_faculty)
+
+    if filter_date_start:
+        attendance_records = attendance_records.filter(timestamp__date__gte=filter_date_start)
+
+    if filter_date_end:
+        attendance_records = attendance_records.filter(timestamp__date__lte=filter_date_end)
+
+    # Fetch unique courses and faculty for filter options
+    courses = Course.objects.all()
+    faculty_users = User.objects.filter(sessions__isnull=False).distinct()
+
+    # Add attendance records and filter options to context
     context = {
         'student_count': student_count,
         'course_count': course_count,
         'faculty_count': faculty_count,
         'session_count': session_count,
         'attendance_count': attendance_count,
-        'flagged_percentage': flagged_percentage,
         'recent_sessions': recent_sessions,
         'recent_attendance': recent_attendance,
         'recent_logs': recent_logs,
+        'attendance_records': attendance_records,
+        'courses': courses,
+        'faculty_users': faculty_users,
     }
     
     return render(request, 'administration/dashboard.html', context)
@@ -543,7 +565,6 @@ def session_list(request):
     # Count attendance for each session
     for session in sessions:
         session.attendance_count = AttendanceRecord.objects.filter(session=session).count()
-        session.flagged_count = AttendanceRecord.objects.filter(session=session, flagged=True).count()
     
     # Get unique courses and faculty for filters
     courses = Course.objects.all()
@@ -575,7 +596,6 @@ def session_detail(request, session_id):
         'attendance_records': attendance_records,
         'attendance_count': attendance_records.count(),
         'verified_count': attendance_records.filter(is_verified=True).count(),
-        'flagged_count': attendance_records.filter(flagged=True).count(),
     }
     
     return render(request, 'administration/session_detail.html', context)

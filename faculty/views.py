@@ -1,13 +1,14 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.db.models import Count, Q
 from django.contrib import messages
 from django.utils.timezone import now
+import csv
 
-from core.models import Course, ClassSession
-from attendance.models import AttendanceRecord
+from core.models import Course, ClassSession, Enrollment, EnrollmentKey
+from attendance.models import AttendanceRecord, Student
 from .models import FacultyProfile, CourseAssignment
 
 @login_required
@@ -57,11 +58,14 @@ def session_list(request):
     
     # Improved: Automatically deactivate sessions whose end datetime has passed
     from datetime import datetime
-    from django.utils.timezone import make_aware
-    now_dt = timezone.now()
+    from django.utils.timezone import make_aware, is_naive
+    now_dt = timezone.localtime(timezone.now())
     expired_sessions = ClassSession.objects.filter(is_active=True)
     for session in expired_sessions:
-        session_end = make_aware(datetime.combine(session.date, session.end_time))
+        session_end = datetime.combine(session.date, session.end_time)
+        if is_naive(session_end):
+            session_end = make_aware(session_end)
+        session_end = timezone.localtime(session_end)
         if now_dt > session_end:
             session.is_active = False
             session.save()
@@ -178,7 +182,6 @@ def session_detail(request, session_id):
         'attendance_records': attendance_records,
         'qr_code': session.get_qr_code(),
         'attendance_count': attendance_records.count(),
-        'flagged_count': attendance_records.filter(flagged=True).count(),
     }
     
     return render(request, 'faculty/session_detail.html', context)
@@ -242,15 +245,38 @@ def attendance_report(request, session_id):
     # Get attendance records
     attendance_records = AttendanceRecord.objects.filter(session=session)
     
-    context = {
-        'session': session,
-        'attendance_records': attendance_records,
-        'attendance_count': attendance_records.count(),
-        'verified_count': attendance_records.filter(is_verified=True).count(),
-        'flagged_count': attendance_records.filter(flagged=True).count(),
-    }
-    
-    return render(request, 'faculty/attendance_report.html', context)
+    # Add session details as a heading in the CSV file
+    csv_data = [
+        [
+            f"Course: {session.course.course_code} - {session.course.title}",
+            f"Date: {session.date}",
+            f"Time: {session.start_time} - {session.end_time}",
+            f"Lecturer: {session.faculty.get_full_name()}",
+            f"Semester: {session.semester}"
+        ],
+        []  # Empty row for spacing
+    ]
+
+    # Add column headers
+    csv_data.append(["Admission Number", "Name", "Timestamp", "Status"])
+
+    # Add attendance records
+    for record in attendance_records:
+        csv_data.append([
+            record.student.admission_number,
+            f"{record.student.first_name} {record.student.last_name}",
+            record.timestamp.strftime("%B %d, %Y %H:%M"),
+            "Verified" if record.is_verified else "Not Verified"
+        ])
+
+    # Generate CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="attendance_report_{session.id}.csv"'
+
+    writer = csv.writer(response)
+    writer.writerows(csv_data)
+
+    return response
 
 @login_required
 def delete_session(request, session_id):
@@ -259,3 +285,26 @@ def delete_session(request, session_id):
     session.delete()
     messages.success(request, 'Session deleted successfully.')
     return redirect('faculty:session_list')
+
+@login_required
+def course_enrollments(request, course_id):
+    """View students enrolled in a specific course"""
+    # Get course and check if it belongs to the faculty
+    course = get_object_or_404(Course, id=course_id, lecturers=request.user)
+    
+    # Get all enrollments for this course
+    enrollments = Enrollment.objects.filter(course=course).select_related('student')
+    
+    # Get enrollment key if it exists
+    try:
+        enrollment_key = EnrollmentKey.objects.get(course=course)
+    except EnrollmentKey.DoesNotExist:
+        enrollment_key = None
+    
+    context = {
+        'course': course,
+        'enrollments': enrollments,
+        'enrollment_key': enrollment_key,
+    }
+    
+    return render(request, 'faculty/course_enrollments.html', context)

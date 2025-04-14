@@ -19,15 +19,10 @@ class AttendanceRecord(models.Model):
     
     # Verification data
     timestamp = models.DateTimeField(default=timezone.now)
-    ip_address = models.GenericIPAddressField(null=True, blank=True)
     
     # Status information
     is_verified = models.BooleanField(default=True)
     verification_method = models.CharField(max_length=20, default="GPS")
-    
-    # Flags
-    flagged = models.BooleanField(default=False)
-    flag_reason = models.CharField(max_length=100, blank=True)
     
     class Meta:
         unique_together = ['session', 'student']  # Prevent duplicate attendance

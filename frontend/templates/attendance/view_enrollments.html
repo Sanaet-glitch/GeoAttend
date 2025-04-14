@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}My Courses - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">My Enrolled Courses</h4>
+                    <a href="{% url 'attendance:student_attendance' %}" class="btn btn-sm btn-outline-light">
+                        <i class="fas fa-clipboard-check"></i> My Attendance
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not student %}
+                        <form method="post">
+                            {% csrf_token %}
+                            <div class="mb-3">
+                                <label for="admission_number" class="form-label">Enter your Admission Number</label>
+                                <input type="text" class="form-control" id="admission_number" name="admission_number" required>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search"></i> View My Courses
+                                </button>
+                            </div>
+                        </form>
+                    {% else %}
+                        <div class="mb-4">
+                            <h5>Student: {{ student.admission_number }}</h5>
+                            {% if student.first_name or student.last_name %}
+                                <p class="text-muted">{{ student.first_name }} {{ student.last_name }}</p>
+                            {% endif %}
+                        </div>
+
+                        {% if enrollments %}
+                            <div class="list-group">
+                                {% for enrollment in enrollments %}
+                                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h6 class="mb-1">{{ enrollment.course.title }}</h6>
+                                            <small class="text-muted">Course Code: {{ enrollment.course.course_code }}</small>
+                                        </div>
+                                        <a href="{% url 'attendance:student_attendance' %}?course_id={{ enrollment.course.id }}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-clipboard-check"></i> View Attendance
+                                        </a>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% else %}
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> You are not enrolled in any courses yet.
+                                <div class="mt-3">
+                                    <a href="{% url 'attendance:enroll_in_course' %}" class="btn btn-info">
+                                        <i class="fas fa-sign-in-alt"></i> Enroll in a Course
+                                    </a>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <div class="mt-4 text-center">
+                            <a href="{% url 'attendance:view_enrollments' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sync"></i> Check Another Student
+                            </a>
+                            {% if enrollments %}
+                                <a href="{% url 'attendance:enroll_in_course' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-plus"></i> Enroll in Another Course
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

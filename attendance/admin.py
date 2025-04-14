@@ -8,6 +8,6 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(AttendanceRecord)
 class AttendanceRecordAdmin(admin.ModelAdmin):
-    list_display = ('student', 'session', 'timestamp', 'is_verified', 'flagged')
-    list_filter = ('is_verified', 'flagged', 'verification_method')
+    list_display = ('student', 'session', 'timestamp', 'is_verified')
+    list_filter = ('is_verified', 'verification_method')
     search_fields = ('student__admission_number', 'student__first_name', 'student__last_name', 'session__title')

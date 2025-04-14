@@ -96,10 +96,12 @@
                                     {% endif %}
                                 </td>
                                 <td>
-                                    {% if session.is_active %}
+                                    {% if session.get_status == "Active" %}
                                         <span class="badge bg-success">Active</span>
+                                    {% elif session.get_status == "Inactive" %}
+                                        <span class="badge bg-secondary">Inactive</span>
                                     {% else %}
-                                        <span class="badge bg-secondary">Closed</span>
+                                        <span class="badge bg-danger">Ended</span>
                                     {% endif %}
                                 </td>
                                 <td>

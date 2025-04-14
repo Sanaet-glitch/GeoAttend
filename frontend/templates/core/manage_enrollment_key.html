@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Enrollment Key - {{ course.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Enrollment Key for {{ course.course_code }}: {{ course.title }}</h2>
+    <form method="post" class="mt-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="key" class="form-label">Enrollment Key</label>
+            <input type="text" class="form-control" id="key" name="key" value="{{ enrollment_key.key|default:'' }}" maxlength="32" autocomplete="off">
+            <div class="form-text">Leave blank to generate a random key.</div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Key</button>
+        {% if enrollment_key %}
+            <button type="submit" name="key" value="" class="btn btn-secondary ms-2">Generate New Random Key</button>
+        {% endif %}
+    </form>
+    {% if enrollment_key %}
+        <div class="alert alert-info mt-4">
+            <strong>Current Key:</strong> <code>{{ enrollment_key.key }}</code>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
