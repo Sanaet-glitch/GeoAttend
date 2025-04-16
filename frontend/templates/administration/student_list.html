@@ -42,12 +42,12 @@
                                 <td>{{ student.attendance_count }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-primary" disabled>
+                                        <a href="{% url 'administration:view_student' student.admission_number %}" class="btn btn-primary">
                                             <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-secondary" disabled>
+                                        </a>
+                                        <a href="{% url 'administration:edit_student' student.admission_number %}" class="btn btn-secondary">
                                             <i class="fas fa-edit"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

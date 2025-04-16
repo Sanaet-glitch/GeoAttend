@@ -30,7 +30,6 @@
                                 <label for="admission_number" class="form-label">Enter your Admission Number</label>
                                 <input type="text" class="form-control" id="admission_number" name="admission_number" required>
                             </div>
-                            
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-primary">
                                     <i class="fas fa-search"></i> View My Courses
@@ -51,11 +50,22 @@
                                     <div class="list-group-item d-flex justify-content-between align-items-center">
                                         <div>
                                             <h6 class="mb-1">{{ enrollment.course.title }}</h6>
-                                            <small class="text-muted">Course Code: {{ enrollment.course.course_code }}</small>
+                                            <small class="text-muted">Course Code: {{ enrollment.course.course_code }}</small><br>
+                                            {% if enrollment.status == 'approved' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif enrollment.status == 'pending' %}
+                                                <span class="badge bg-warning text-dark">Pending Approval</span>
+                                                <div class="text-muted small">You will be able to attend once approved.</div>
+                                            {% elif enrollment.status == 'rejected' %}
+                                                <span class="badge bg-danger">Rejected</span>
+                                                <div class="text-muted small">Contact your lecturer for more information.</div>
+                                            {% endif %}
                                         </div>
-                                        <a href="{% url 'attendance:student_attendance' %}?course_id={{ enrollment.course.id }}" class="btn btn-sm btn-outline-primary">
-                                            <i class="fas fa-clipboard-check"></i> View Attendance
-                                        </a>
+                                        {% if enrollment.status == 'approved' %}
+                                            <a href="{% url 'attendance:student_attendance' %}?course_id={{ enrollment.course.id }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-clipboard-check"></i> View Attendance
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 {% endfor %}
                             </div>

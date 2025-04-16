@@ -79,9 +79,11 @@
                                         <td>{{ assignment.semester }}</td>
                                         <td>{{ assignment.year }}</td>
                                         <td>
-                                            <button class="btn btn-sm btn-outline-danger" disabled>
-                                                <i class="fas fa-trash"></i>
-                                            </button>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'faculty:delete_course_assignment' assignment.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this course assignment?');">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 {% endfor %}
@@ -140,10 +142,9 @@
                     <div class="mb-3">
                         <label for="semester" class="form-label">Semester</label>
                         <select name="semester" id="semester" class="form-select" required>
-                            <option value="Spring">Spring</option>
-                            <option value="Summer">Summer</option>
-                            <option value="Fall">Fall</option>
-                            <option value="Winter">Winter</option>
+                            <option value="Jan-Apr">January - April</option>
+                            <option value="May-Aug">May - August</option>
+                            <option value="Sep-Dec">September - December</option>
                         </select>
                     </div>
                     

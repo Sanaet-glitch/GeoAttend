@@ -37,6 +37,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'core.middleware.DisableClientSideCachingMiddleware',  # Prevent caching of pages
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -116,3 +117,8 @@ CORS_ALLOW_ALL_ORIGINS = DEBUG  # Only for development
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Session settings
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when the browser is closed
+SESSION_COOKIE_AGE = 1800  # Set session timeout to 30 minutes (1800 seconds)
+SESSION_SAVE_EVERY_REQUEST = True  # Refresh session expiry on every request

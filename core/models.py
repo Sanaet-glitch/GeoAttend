@@ -96,6 +96,9 @@ class EnrollmentKey(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_enrollment_keys")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    regenerated_at = models.DateTimeField(null=True, blank=True)
+    previous_key = models.CharField(max_length=32, null=True, blank=True)
 
     def __str__(self):
         return f"Key for {self.course.course_code}"
@@ -106,6 +109,12 @@ class Enrollment(models.Model):
     student = models.ForeignKey('attendance.Student', on_delete=models.CASCADE, related_name="enrollments")
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="enrollments")
     enrolled_at = models.DateTimeField(auto_now_add=True)
+    STATUS_CHOICES = [
+        ("pending", "Pending Approval"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="pending")
 
     class Meta:
         unique_together = ('student', 'course')

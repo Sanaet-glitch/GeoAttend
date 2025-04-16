@@ -56,11 +56,11 @@ def submit_attendance(request, session_key):
             defaults={'first_name': '', 'last_name': ''}
         )
         
-        # Check if student is enrolled in the course
-        if not Enrollment.objects.filter(student=student, course=session.course).exists():
+        # Check if student is enrolled in the course and approved
+        if not Enrollment.objects.filter(student=student, course=session.course, status='approved').exists():
             return JsonResponse({
                 'success': False,
-                'message': 'You are not enrolled in this course. Please enroll using the enrollment key from your lecturer.'
+                'message': 'You are not approved to attend this course. Please ensure your enrollment is approved.'
             }, status=403)
         
         # Check for existing attendance by student for this session
@@ -88,6 +88,12 @@ def submit_attendance(request, session_key):
             'message': f'Error: {str(e)}'
         }, status=500)
 
+def api_mark_attendance(request, session_key):
+    """API endpoint for attendance marking (GET only for now)"""
+    if request.method == 'GET':
+        return JsonResponse({'detail': 'API endpoint is reachable. Use POST to submit attendance.'})
+    return JsonResponse({'detail': 'Method not allowed.'}, status=405)
+
 def enroll_in_course(request):
     """Allow students to enroll in courses using an enrollment key"""
     if request.method == 'POST':
@@ -105,20 +111,31 @@ def enroll_in_course(request):
         try:
             key_obj = EnrollmentKey.objects.get(key=enrollment_key)
             course = key_obj.course
+            # Check for expiry
+            if key_obj.expires_at and timezone.now() > key_obj.expires_at:
+                messages.error(request, 'This enrollment key has expired. Please contact your lecturer for a new key.')
+                return redirect('attendance:enroll_in_course')
         except EnrollmentKey.DoesNotExist:
             messages.error(request, 'Invalid enrollment key. Please check and try again.')
             return redirect('attendance:enroll_in_course')
         
         # Check if already enrolled
-        if Enrollment.objects.filter(student=student, course=course).exists():
-            messages.info(request, f'You are already enrolled in {course.course_code}: {course.title}')
+        existing = Enrollment.objects.filter(student=student, course=course).first()
+        if existing:
+            if existing.status == 'pending':
+                messages.info(request, f'Your enrollment in {course.course_code}: {course.title} is pending approval.')
+            elif existing.status == 'approved':
+                messages.info(request, f'You are already enrolled in {course.course_code}: {course.title}.')
+            elif existing.status == 'rejected':
+                messages.warning(request, f'Your enrollment in {course.course_code}: {course.title} was rejected. Please contact your lecturer.')
         else:
-            # Create enrollment
+            # Create enrollment as pending
             Enrollment.objects.create(
                 student=student,
-                course=course
+                course=course,
+                status='pending'
             )
-            messages.success(request, f'Successfully enrolled in {course.course_code}: {course.title}')
+            messages.success(request, f'Enrollment request submitted for {course.course_code}: {course.title}. Please wait for faculty approval.')
         
         return redirect('attendance:enroll_in_course')
     
@@ -138,7 +155,7 @@ def view_enrollments(request):
         
         try:
             student = Student.objects.get(admission_number=admission_number)
-            enrollments = Enrollment.objects.filter(student=student).select_related('course')
+            enrollments = Enrollment.objects.filter(student=student, status='approved').select_related('course')
         except Student.DoesNotExist:
             messages.error(request, 'Student with this admission number does not exist.')
             return redirect('attendance:view_enrollments')

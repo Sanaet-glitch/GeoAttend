@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponse
 from django.db.models import Count, Q
@@ -10,6 +10,13 @@ import csv
 from core.models import Course, ClassSession, Enrollment, EnrollmentKey
 from attendance.models import AttendanceRecord, Student
 from .models import FacultyProfile, CourseAssignment
+from administration.views import log_admin_action
+
+# Helper function to check if user is admin
+from django.contrib.auth.models import User
+
+def is_admin(user):
+    return user.is_staff or user.is_superuser
 
 @login_required
 def dashboard(request):
@@ -288,14 +295,28 @@ def delete_session(request, session_id):
 
 @login_required
 def course_enrollments(request, course_id):
-    """View students enrolled in a specific course"""
-    # Get course and check if it belongs to the faculty
+    """View students enrolled in a specific course and approve/reject pending enrollments"""
     course = get_object_or_404(Course, id=course_id, lecturers=request.user)
     
-    # Get all enrollments for this course
-    enrollments = Enrollment.objects.filter(course=course).select_related('student')
+    if request.method == 'POST':
+        enrollment_id = request.POST.get('enrollment_id')
+        action = request.POST.get('action')
+        enrollment = get_object_or_404(Enrollment, id=enrollment_id, course=course)
+        if action == 'approve':
+            enrollment.status = 'approved'
+            enrollment.save()
+            messages.success(request, f"Enrollment for {enrollment.student.admission_number} approved.")
+        elif action == 'reject':
+            enrollment.status = 'rejected'
+            enrollment.save()
+            messages.warning(request, f"Enrollment for {enrollment.student.admission_number} rejected.")
+        return redirect('faculty:course_enrollments', course_id=course.id)
     
-    # Get enrollment key if it exists
+    enrollments = Enrollment.objects.filter(course=course).select_related('student')
+    pending_enrollments = enrollments.filter(status='pending')
+    approved_enrollments = enrollments.filter(status='approved')
+    rejected_enrollments = enrollments.filter(status='rejected')
+    
     try:
         enrollment_key = EnrollmentKey.objects.get(course=course)
     except EnrollmentKey.DoesNotExist:
@@ -304,7 +325,29 @@ def course_enrollments(request, course_id):
     context = {
         'course': course,
         'enrollments': enrollments,
+        'pending_enrollments': pending_enrollments,
+        'approved_enrollments': approved_enrollments,
+        'rejected_enrollments': rejected_enrollments,
         'enrollment_key': enrollment_key,
     }
     
     return render(request, 'faculty/course_enrollments.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def delete_course_assignment(request, assignment_id):
+    """Delete a specific course assignment for a faculty member."""
+    assignment = get_object_or_404(CourseAssignment, id=assignment_id)
+    assignment.delete()
+
+    # Log action
+    log_admin_action(
+        request,
+        'DELETE',
+        'CourseAssignment',
+        assignment_id,
+        f'Deleted course assignment for {assignment.course.course_code} assigned to {assignment.faculty.user.username}'
+    )
+
+    messages.success(request, f'Course assignment for {assignment.course.course_code} deleted successfully.')
+    return redirect('administration:faculty_detail', faculty_id=assignment.faculty.id)

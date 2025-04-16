@@ -36,12 +36,12 @@
                                 <td>{{ course.session_count }}</td>
                                 <td>
                                     <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-primary" disabled>
+                                        <a href="{% url 'administration:course_detail' course.id %}" class="btn btn-primary">
                                             <i class="fas fa-eye"></i>
-                                        </button>
-                                        <button class="btn btn-secondary" disabled>
+                                        </a>
+                                        <a href="{% url 'administration:edit_course' course.id %}" class="btn btn-secondary">
                                             <i class="fas fa-edit"></i>
-                                        </button>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

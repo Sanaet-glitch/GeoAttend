@@ -25,11 +25,9 @@
                         <h3 class="display-6 font-monospace">{{ enrollment_key.key }}</h3>
                         <p class="text-muted">Created on: {{ enrollment_key.created_at|date:"M d, Y" }}</p>
                     </div>
-                    
                     <div class="alert alert-info">
                         <i class="fas fa-info-circle"></i> Share this key with students to allow them to enroll in this course.
                     </div>
-                    
                     <div class="mt-4">
                         <p><strong>Student enrollment URL:</strong></p>
                         <div class="input-group">
@@ -49,28 +47,25 @@
             </div>
         </div>
     </div>
-    
     <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fas fa-users"></i> Enrolled Students</h5>
-                {% if enrollments %}
-                <span class="badge bg-light text-dark">Total: {{ enrollments.count }}</span>
-                {% endif %}
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0"><i class="fas fa-hourglass-half"></i> Pending Enrollments</h5>
             </div>
             <div class="card-body">
-                {% if enrollments %}
+                {% if pending_enrollments %}
                     <div class="table-responsive">
                         <table class="table table-hover">
                             <thead class="table-light">
                                 <tr>
                                     <th>Admission Number</th>
                                     <th>Name</th>
-                                    <th>Enrollment Date</th>
+                                    <th>Requested At</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for enrollment in enrollments %}
+                                {% for enrollment in pending_enrollments %}
                                     <tr>
                                         <td>{{ enrollment.student.admission_number }}</td>
                                         <td>
@@ -80,19 +75,100 @@
                                                 <span class="text-muted">Not provided</span>
                                             {% endif %}
                                         </td>
-                                        <td>{{ enrollment.created_at|date:"M d, Y" }}</td>
+                                        <td>{{ enrollment.enrolled_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <form method="post" class="d-inline">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="enrollment_id" value="{{ enrollment.id }}">
+                                                <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                                                <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm ms-1">Reject</button>
+                                            </form>
+                                        </td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
                         </table>
                     </div>
                 {% else %}
-                    <div class="text-center py-4">
-                        <p class="text-muted">No students have enrolled in this course yet.</p>
-                        <div class="alert alert-info">
-                            <i class="fas fa-info-circle"></i> Students can enroll by entering their admission number and the enrollment key.
-                        </div>
+                    <div class="alert alert-info">No pending enrollments.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-user-check"></i> Approved Enrollments</h5>
+            </div>
+            <div class="card-body">
+                {% if approved_enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Admission Number</th>
+                                    <th>Name</th>
+                                    <th>Enrollment Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment in approved_enrollments %}
+                                    <tr>
+                                        <td>{{ enrollment.student.admission_number }}</td>
+                                        <td>
+                                            {% if enrollment.student.first_name or enrollment.student.last_name %}
+                                                {{ enrollment.student.first_name }} {{ enrollment.student.last_name }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ enrollment.enrolled_at|date:"M d, Y" }}</td>
+                                        <td><span class="badge bg-success">Approved</span></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
+                {% else %}
+                    <div class="alert alert-info">No approved enrollments.</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0"><i class="fas fa-user-times"></i> Rejected Enrollments</h5>
+            </div>
+            <div class="card-body">
+                {% if rejected_enrollments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Admission Number</th>
+                                    <th>Name</th>
+                                    <th>Requested At</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for enrollment in rejected_enrollments %}
+                                    <tr>
+                                        <td>{{ enrollment.student.admission_number }}</td>
+                                        <td>
+                                            {% if enrollment.student.first_name or enrollment.student.last_name %}
+                                                {{ enrollment.student.first_name }} {{ enrollment.student.last_name }}
+                                            {% else %}
+                                                <span class="text-muted">Not provided</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>{{ enrollment.enrolled_at|date:"M d, Y H:i" }}</td>
+                                        <td><span class="badge bg-danger">Rejected</span></td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">No rejected enrollments.</div>
                 {% endif %}
             </div>
         </div>
@@ -106,13 +182,11 @@
         const element = document.getElementById(elementId);
         element.select();
         document.execCommand("copy");
-        
         // Show a temporary tooltip or notification
         const button = element.nextElementSibling;
         const originalHTML = button.innerHTML;
         button.innerHTML = '<i class="fas fa-check"></i> Copied!';
         button.classList.replace('btn-outline-secondary', 'btn-success');
-        
         setTimeout(() => {
             button.innerHTML = originalHTML;
             button.classList.replace('btn-success', 'btn-outline-secondary');

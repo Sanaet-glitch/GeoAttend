@@ -191,6 +191,8 @@ def assign_course(request, faculty_id):
             semester=semester,
             year=year
         )
+        # Automatically add faculty user to course's lecturers
+        course.lecturers.add(faculty.user)
         
         # Log action
         log_admin_action(
@@ -259,6 +261,76 @@ def create_course(request):
 
 @login_required
 @user_passes_test(is_admin)
+def edit_course(request, course_id):
+    """Edit an existing course."""
+    course = get_object_or_404(Course, id=course_id)
+
+    if request.method == 'POST':
+        course_code = request.POST.get('course_code')
+        title = request.POST.get('title')
+        description = request.POST.get('description', '')
+
+        # Update course details
+        course.course_code = course_code
+        course.title = title
+        course.description = description
+        course.save()
+
+        # Log action
+        log_admin_action(
+            request,
+            'UPDATE',
+            'Course',
+            course.id,
+            f'Updated course {course_code}: {title}'
+        )
+
+        messages.success(request, f'Course {course_code}: {title} updated successfully.')
+        return redirect('administration:course_list')
+
+    context = {
+        'course': course,
+    }
+
+    return render(request, 'administration/edit_course.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def delete_course(request, course_id):
+    """Delete a specific course."""
+    course = get_object_or_404(Course, id=course_id)
+    course.delete()
+
+    # Log action
+    log_admin_action(
+        request,
+        'DELETE',
+        'Course',
+        course_id,
+        f'Deleted course {course.course_code}: {course.title}'
+    )
+
+    messages.success(request, f'Course {course.course_code}: {course.title} deleted successfully.')
+    return redirect('administration:course_list')
+
+@login_required
+@user_passes_test(is_admin)
+def course_detail(request, course_id):
+    """View details of a specific course."""
+    course = get_object_or_404(Course, id=course_id)
+    sessions = ClassSession.objects.filter(course=course)
+    faculty = course.lecturers.all()
+
+    context = {
+        'course': course,
+        'sessions': sessions,
+        'faculty': faculty,
+    }
+
+    return render(request, 'administration/course_detail.html', context)
+
+@login_required
+@user_passes_test(is_admin)
 def student_list(request):
     """Manage students"""
     students = Student.objects.all()
@@ -295,6 +367,47 @@ def create_student(request):
         messages.success(request, f'Student {admission_number} created successfully.')
         return redirect('administration:student_list')
     return render(request, 'administration/create_student.html')
+
+@login_required
+@user_passes_test(is_admin)
+def view_student(request, admission_number):
+    """View details of a specific student."""
+    student = get_object_or_404(Student, admission_number=admission_number)
+    attendance_records = AttendanceRecord.objects.filter(student=student)
+
+    context = {
+        'student': student,
+        'attendance_records': attendance_records,
+    }
+
+    return render(request, 'administration/view_student.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def edit_student(request, admission_number):
+    """Edit details of a specific student."""
+    student = get_object_or_404(Student, admission_number=admission_number)
+
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+
+        if not all([first_name, last_name]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('administration:edit_student', admission_number=admission_number)
+
+        student.first_name = first_name
+        student.last_name = last_name
+        student.save()
+
+        messages.success(request, f'Student {student.admission_number} updated successfully.')
+        return redirect('administration:student_list')
+
+    context = {
+        'student': student,
+    }
+
+    return render(request, 'administration/edit_student.html', context)
 
 @login_required
 @user_passes_test(is_admin)
