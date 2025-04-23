@@ -187,7 +187,7 @@ def session_detail(request, session_id):
         'faculty': faculty_profile,
         'session': session,
         'attendance_records': attendance_records,
-        'qr_code': session.get_qr_code(),
+        'qr_code': session.get_qr_code(request),
         'attendance_count': attendance_records.count(),
     }
     
@@ -351,3 +351,14 @@ def delete_course_assignment(request, assignment_id):
 
     messages.success(request, f'Course assignment for {assignment.course.course_code} deleted successfully.')
     return redirect('administration:faculty_detail', faculty_id=assignment.faculty.id)
+
+@login_required
+def attendance_records_partial(request, session_id):
+    """Return the attendance records table as an HTML fragment for AJAX refresh."""
+    session = get_object_or_404(ClassSession, id=session_id)
+    if session.faculty != request.user:
+        return HttpResponseForbidden("You don't have permission to view this session")
+    attendance_records = AttendanceRecord.objects.filter(session=session)
+    return render(request, 'faculty/attendance_records_partial.html', {
+        'attendance_records': attendance_records
+    })
