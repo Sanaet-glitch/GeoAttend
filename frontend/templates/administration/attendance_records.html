@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Attendance Records - GeoAttend{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Attendance Records</h1>
+</div>
+
+<div class="card shadow-sm mb-4">
+    <div class="card-header bg-light">
+        <h5 class="mb-0">Filter Attendance Records</h5>
+    </div>
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4">
+            <div class="col-md-3">
+                <label for="course" class="form-label">Course</label>
+                <select name="course" id="course" class="form-select">
+                    <option value="">All Courses</option>
+                    {% for course in courses %}
+                        <option value="{{ course.course_code }}" {% if filter_course == course.course_code %}selected{% endif %}>{{ course.course_code }}: {{ course.title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="faculty" class="form-label">Faculty</label>
+                <select name="faculty" id="faculty" class="form-select">
+                    <option value="">All Faculty</option>
+                    {% for user in faculty_users %}
+                        <option value="{{ user.username }}" {% if filter_faculty == user.username %}selected{% endif %}>{{ user.get_full_name|default:user.username }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_start" class="form-label">Date From</label>
+                <input type="date" name="date_start" id="date_start" class="form-control" value="{{ filter_date_start }}">
+            </div>
+            <div class="col-md-3">
+                <label for="date_end" class="form-label">Date To</label>
+                <input type="date" name="date_end" id="date_end" class="form-control" value="{{ filter_date_end }}">
+            </div>
+            <div class="col-12 text-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+
+        {% if attendance_records %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Session</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in attendance_records %}
+                            <tr>
+                                <td>{{ record.student.admission_number }}</td>
+                                <td>{{ record.session.course.course_code }}: {{ record.session.course.title }}</td>
+                                <td>{{ record.session.title }}</td>
+                                <td>{{ record.timestamp }}</td>
+                                <td>
+                                    {% if record.is_verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Not Verified</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No attendance records found.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

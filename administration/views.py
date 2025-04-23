@@ -712,3 +712,37 @@ def session_detail(request, session_id):
     }
     
     return render(request, 'administration/session_detail.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def attendance_records_list(request):
+    """Admin view: List all attendance records with filters."""
+    filter_course = request.GET.get('course')
+    filter_faculty = request.GET.get('faculty')
+    filter_date_start = request.GET.get('date_start')
+    filter_date_end = request.GET.get('date_end')
+
+    attendance_records = AttendanceRecord.objects.select_related('student', 'session', 'session__course', 'session__faculty')
+    if filter_course:
+        attendance_records = attendance_records.filter(session__course__course_code=filter_course)
+    if filter_faculty:
+        attendance_records = attendance_records.filter(session__faculty__username=filter_faculty)
+    if filter_date_start:
+        attendance_records = attendance_records.filter(timestamp__date__gte=filter_date_start)
+    if filter_date_end:
+        attendance_records = attendance_records.filter(timestamp__date__lte=filter_date_end)
+    attendance_records = attendance_records.order_by('-timestamp')
+
+    courses = Course.objects.all()
+    faculty_users = User.objects.filter(sessions__isnull=False).distinct()
+
+    context = {
+        'attendance_records': attendance_records,
+        'courses': courses,
+        'faculty_users': faculty_users,
+        'filter_course': filter_course,
+        'filter_faculty': filter_faculty,
+        'filter_date_start': filter_date_start,
+        'filter_date_end': filter_date_end,
+    }
+    return render(request, 'administration/attendance_records.html', context)

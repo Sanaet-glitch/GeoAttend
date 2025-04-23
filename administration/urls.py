@@ -25,4 +25,5 @@ urlpatterns = [
     path('settings/', views.system_settings, name='system_settings'),
     path('settings/create/', views.create_setting, name='create_setting'),
     path('logs/', views.activity_logs, name='activity_logs'),
+    path('attendance-records/', views.attendance_records_list, name='attendance_records_list'),
 ]
