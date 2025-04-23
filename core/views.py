@@ -9,13 +9,12 @@ from .models import Course, EnrollmentKey
 def index(request):
     """Home page view"""
     if request.user.is_authenticated:
+        # If user is admin, redirect to admin dashboard first
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('administration:dashboard')
         # If user is faculty, redirect to faculty dashboard
         if hasattr(request.user, 'facultyprofile'):
             return redirect('faculty:dashboard')
-        # If user is admin, redirect to admin dashboard
-        elif request.user.is_staff:
-            return redirect('administration:dashboard')
-    
     # Default to the public landing page
     return render(request, 'core/index.html')
 
