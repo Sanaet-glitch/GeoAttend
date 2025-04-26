@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
@@ -11,8 +11,20 @@ from core.models import ClassSession, Course, Enrollment, EnrollmentKey
 
 def mark_attendance_form(request, session_key):
     """Display form for students to mark attendance"""
-    session = get_object_or_404(ClassSession, session_key=session_key, is_active=True)
-    
+    try:
+        # Try to get an active session with the given key
+        session = ClassSession.objects.get(session_key=session_key, is_active=True)
+        
+        # Check if the session has ended based on time
+        if session.get_status() == "Ended":
+             return HttpResponseNotFound("<h1>Session Ended</h1><p>This attendance session has already ended and is no longer active.</p>")
+
+    except ClassSession.DoesNotExist:
+        # Handle cases where the session key is invalid or the session is not active
+        return HttpResponseNotFound("<h1>Session Not Found or Inactive</h1><p>The attendance link/QR code is invalid, expired, or the session is not currently active. Please use a valid link/QR code provided by your faculty.</p>")
+        # Optional: Render a custom template instead
+        # return render(request, 'attendance/session_not_found.html', status=404)
+
     context = {
         'session': session,
         'course': session.course,

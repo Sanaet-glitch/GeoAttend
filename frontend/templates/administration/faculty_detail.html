@@ -42,10 +42,10 @@
             </div>
             <div class="card-footer bg-transparent">
                 <div class="d-grid gap-2">
-                    <button class="btn btn-outline-primary" disabled>
+                    <button class="btn btn-outline-primary" onclick="window.location.href='{% url 'administration:edit_faculty' faculty.id %}'">
                         <i class="fas fa-user-edit"></i> Edit Profile
                     </button>
-                    <button class="btn btn-outline-secondary" disabled>
+                    <button class="btn btn-outline-secondary" onclick="window.location.href='{% url 'administration:reset_faculty_password' faculty.id %}'">
                         <i class="fas fa-key"></i> Reset Password
                     </button>
                 </div>
@@ -108,9 +108,40 @@
                 <h5 class="mb-0"><i class="fas fa-clipboard-list"></i> Recent Activity</h5>
             </div>
             <div class="card-body">
-                <div class="text-center py-4">
-                    <p class="text-muted">Coming soon: Faculty activity tracking</p>
-                </div>
+                {% if recent_logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Date/Time</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in recent_logs %}
+                                    <tr>
+                                        <td>{{ log.timestamp|date:'M d, Y H:i' }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if log.action == 'CREATE' %}bg-success
+                                                {% elif log.action == 'UPDATE' %}bg-primary
+                                                {% elif log.action == 'DELETE' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ log.action }}
+                                            </span>
+                                        </td>
+                                        <td>{{ log.details|default:'-' }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <p class="text-muted">No recent activity found for this faculty.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>

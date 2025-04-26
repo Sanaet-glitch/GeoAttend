@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
-
-{% block title %}Edit Student - {{ student.admission_number }}{% endblock %}
-
 {% block content %}
+<div class="mb-3">
+    <a href="{% url 'administration:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-home"></i> Back to Admin Dashboard
+    </a>
+</div>
 <div class="container mt-4">
     <h1 class="h3">Edit Student</h1>
     <form method="post" class="mt-3">

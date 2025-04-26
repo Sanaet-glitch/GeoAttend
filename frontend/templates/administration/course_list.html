@@ -42,6 +42,9 @@
                                         <a href="{% url 'administration:edit_course' course.id %}" class="btn btn-secondary">
                                             <i class="fas fa-edit"></i>
                                         </a>
+                                        <a href="{% url 'administration:delete_course' course.id %}" class="btn btn-danger" onclick="return confirm('Are you sure you want to delete this course?');">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
                                     </div>
                                 </td>
                             </tr>

@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
-
-{% block title %}Attendance Report - {{ session.title }}{% endblock %}
-
 {% block content %}
+<div class="mb-3">
+    <a href="{% url 'faculty:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-home"></i> Back to Faculty Dashboard
+    </a>
+</div>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h1 class="h3">Attendance Report</h1>

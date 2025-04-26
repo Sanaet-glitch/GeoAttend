@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'administration:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="fas fa-home"></i> Back to Admin Dashboard
+    </a>
+</div>
+<div class="container mt-4">
+    <h1 class="h3">Edit Faculty Profile</h1>
+    <form method="post" class="mt-3">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="first_name" class="form-label">First Name</label>
+            <input type="text" class="form-control" id="first_name" name="first_name" value="{{ faculty.user.first_name }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="last_name" class="form-label">Last Name</label>
+            <input type="text" class="form-control" id="last_name" name="last_name" value="{{ faculty.user.last_name }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="email" class="form-label">Email</label>
+            <input type="email" class="form-control" id="email" name="email" value="{{ faculty.user.email }}" required>
+        </div>
+        <div class="mb-3">
+            <label for="phone" class="form-label">Phone</label>
+            <input type="text" class="form-control" id="phone" name="phone" value="{{ faculty.phone }}">
+        </div>
+        <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <input type="text" class="form-control" id="department" name="department" value="{{ faculty.department }}" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+        <a href="{% url 'administration:faculty_detail' faculty.id %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

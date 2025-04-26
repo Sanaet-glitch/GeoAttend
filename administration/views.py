@@ -111,12 +111,17 @@ def faculty_detail(request, faculty_id):
     assigned_courses = [assignment.course for assignment in course_assignments]
     available_courses = Course.objects.exclude(id__in=[course.id for course in assigned_courses])
     
+    # Get recent activity logs for this faculty
+    recent_logs = AdminLog.objects.filter(
+        object_type__in=["FacultyProfile", "CourseAssignment"],
+        object_id=str(faculty.id)
+    ).order_by('-timestamp')[:10]
     context = {
         'faculty': faculty,
         'course_assignments': course_assignments,
         'available_courses': available_courses,
+        'recent_logs': recent_logs,
     }
-    
     return render(request, 'administration/faculty_detail.html', context)
 
 @login_required
@@ -257,7 +262,7 @@ def create_course(request):
         messages.success(request, f'Course {course_code}: {title} created successfully.')
         return redirect('administration:course_list')
     
-    return render(request, 'administration/create_course.html')
+    return render(request, 'administration/create_course.html', {})
 
 @login_required
 @user_passes_test(is_admin)
@@ -746,3 +751,55 @@ def attendance_records_list(request):
         'filter_date_end': filter_date_end,
     }
     return render(request, 'administration/attendance_records.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def reset_faculty_password(request, faculty_id):
+    """Allow admin to reset a faculty member's password."""
+    faculty = get_object_or_404(FacultyProfile, id=faculty_id)
+    user = faculty.user
+    if request.method == 'POST':
+        password1 = request.POST.get('password1')
+        password2 = request.POST.get('password2')
+        if not password1 or not password2:
+            messages.error(request, 'Please enter the new password twice.')
+            return redirect('administration:reset_faculty_password', faculty_id=faculty.id)
+        if password1 != password2:
+            messages.error(request, 'Passwords do not match.')
+            return redirect('administration:reset_faculty_password', faculty_id=faculty.id)
+        user.set_password(password1)
+        user.save()
+        messages.success(request, 'Password reset successfully.')
+        return redirect('administration:faculty_detail', faculty_id=faculty.id)
+    context = {
+        'faculty': faculty,
+    }
+    return render(request, 'administration/reset_faculty_password.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def edit_faculty(request, faculty_id):
+    faculty = get_object_or_404(FacultyProfile, id=faculty_id)
+    user = faculty.user
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        phone = request.POST.get('phone')
+        department = request.POST.get('department')
+        if not all([first_name, last_name, email, department]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('administration:edit_faculty', faculty_id=faculty.id)
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save()
+        faculty.phone = phone
+        faculty.department = department
+        faculty.save()
+        messages.success(request, 'Faculty profile updated successfully.')
+        return redirect('administration:faculty_detail', faculty_id=faculty.id)
+    context = {
+        'faculty': faculty,
+    }
+    return render(request, 'administration/edit_faculty.html', context)
