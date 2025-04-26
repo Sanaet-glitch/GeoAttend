@@ -32,7 +32,7 @@ INSTALLED_APPS = [
     'core',
     'attendance',
     'faculty',
-    'administration',  # Added administration app
+    'administration',
 ]
 
 MIDDLEWARE = [
@@ -120,5 +120,5 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Session settings
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True  # Expire session when the browser is closed
-SESSION_COOKIE_AGE = 1800  # Set session timeout to 30 minutes (1800 seconds)
+SESSION_COOKIE_AGE = 300  # Set session timeout to 5 minutes (300 seconds)
 SESSION_SAVE_EVERY_REQUEST = True  # Refresh session expiry on every request

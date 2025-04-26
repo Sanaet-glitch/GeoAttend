@@ -137,14 +137,29 @@
         // Hide form
         attendanceForm.style.display = 'none';
         
-        // Show result
+        // Show result with student dashboard options
         attendanceResult.innerHTML = `
             <div class="text-center mb-4">
                 <i class="fas fa-check-circle text-success" style="font-size: 4rem;"></i>
             </div>
             <h4 class="text-center mb-3">Attendance Marked Successfully</h4>
-            <div class="text-center mt-4">
-                <p>You can close this window now.</p>
+            
+            <div class="mt-4 mb-3 text-center">
+                <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
+                <h3>Students</h3>
+                <p>Scan the QR code shown by your faculty to mark attendance. No login required!</p>
+            </div>
+            
+            <div class="d-grid gap-2 mb-4">
+                <a href="{% url 'attendance:enroll_in_course' %}" class="btn btn-outline-primary">
+                    <i class="fas fa-sign-in-alt"></i> Enroll in a Course
+                </a>
+                <a href="{% url 'attendance:view_enrollments' %}" class="btn btn-outline-info">
+                    <i class="fas fa-list"></i> View My Courses
+                </a>
+                <a href="{% url 'attendance:student_attendance' %}" class="btn btn-outline-success">
+                    <i class="fas fa-clipboard-check"></i> Check My Attendance
+                </a>
             </div>
         `;
         attendanceResult.style.display = 'block';

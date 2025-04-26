@@ -1,7 +1,6 @@
 from django.db import models
 from django.utils import timezone
 from django.utils.timezone import localtime
-from core.models import ClassSession
 
 class Student(models.Model):
     """Model representing a student"""
@@ -14,7 +13,7 @@ class Student(models.Model):
 
 class AttendanceRecord(models.Model):
     """Model for tracking student attendance"""
-    session = models.ForeignKey(ClassSession, on_delete=models.CASCADE, related_name='attendance_records')
+    session = models.ForeignKey('core.ClassSession', on_delete=models.CASCADE, related_name='attendance_records')
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='attendance_records')
     
     # Verification data

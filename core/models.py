@@ -45,30 +45,47 @@ class ClassSession(models.Model):
     def __str__(self):
         return f"{self.course} - {self.title} ({self.date})"
 
-    def get_qr_code(self):
+    def get_qr_code(self, request=None):
         """Generate a QR code for this session with extra session info."""
-        from django.conf import settings
         import json
-        # Prepare session info
+        
+        # Make sure we have a request object for proper URL generation
+        if request is None:
+            # Fallback to settings.BASE_URL only if no request is provided
+            # This should rarely happen with our improved implementation
+            from django.conf import settings
+            base_url = settings.BASE_URL
+            attendance_url = f"{base_url}/attendance/mark/{self.session_key}/"
+        else:
+            # Generate a fully qualified URL including the correct host/domain
+            # This is critical for QR codes to work across devices on the same network
+            attendance_url = request.build_absolute_uri(f"/attendance/mark/{self.session_key}/")
+        
+        # Prepare session info with detailed data for better debugging
         session_info = {
             'session_key': str(self.session_key),
             'course_code': self.course.course_code,
             'course_title': self.course.title,
             'date': self.date.strftime('%Y-%m-%d'),
             'start_time': self.start_time.strftime('%H:%M'),
-            'url': f"{settings.BASE_URL}/api/attendance/mark/{self.session_key}/"
+            'url': attendance_url
         }
-        qr_data = json.dumps(session_info)
-        # Generate QR code
+        
+        # Use a more concise data format for the QR code
+        # Instead of full JSON, just use the URL directly for better compatibility
+        qr_data = attendance_url
+        
+        # Generate QR code with error correction for better scanning
         qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            error_correction=qrcode.constants.ERROR_CORRECT_M,  # Medium error correction
             box_size=10,
             border=4,
         )
         qr.add_data(qr_data)
         qr.make(fit=True)
         img = qr.make_image(fill_color="black", back_color="white")
+        
         # Convert to base64 for embedding in web page
         buffered = BytesIO()
         img.save(buffered, format="PNG")

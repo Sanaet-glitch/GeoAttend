@@ -198,6 +198,7 @@ def student_attendance(request):
                 attendance_records[enrollment.course] = course_records
                 
         except Student.DoesNotExist:
+            # Only add the error message here, not in GET logic below
             messages.error(request, 'Student with this admission number does not exist.')
             return redirect('attendance:student_attendance')
     
@@ -218,7 +219,7 @@ def student_attendance(request):
                 ).select_related('session')
             }
         except (Student.DoesNotExist, Course.DoesNotExist):
-            messages.error(request, 'Invalid student or course.')
+            # Do not add error message here to avoid duplication
             return redirect('attendance:student_attendance')
     
     # For a direct link with just course_id

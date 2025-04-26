@@ -14,8 +14,9 @@ urlpatterns = [
     path('logout/', LogoutView.as_view(), name='logout'),
     path('api/attendance/', include('attendance.urls')),
     path('faculty/', include('faculty.urls')), 
-    path('administration/', include('administration.urls')),  # Added administration URLs
-    path('', include('core.urls')),
+    path('administration/', include('administration.urls')), # Include URLs for the administration app
+    path('attendance/', include('attendance.urls')), # Include URLs for the attendance app
+    path('', include('core.urls')), # Map root URL back to core app's index view
 ]
 
 # Serve static files during development

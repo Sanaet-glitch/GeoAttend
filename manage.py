@@ -6,7 +6,7 @@ import sys
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')  # Changed from 'GeoAttend.settings' to just 'settings'
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
     try:
         from django.core.management import execute_from_command_line
     except ImportError as exc:
@@ -15,9 +15,28 @@ def main():
             "available on your PYTHONPATH environment variable? Did you "
             "forget to activate a virtual environment?"
         ) from exc
-    print("To access the server:")
-    print("1. On the same machine, use http://127.0.0.1:8000/ or http://localhost:8000/.")
-    print("2. On another device in the same network, use http://<your-computer-ip>:8000/ (e.g., http://192.168.1.147:8000/).")
+        
+    # Only show our custom message if running the server command
+    if len(sys.argv) > 1 and sys.argv[1] == 'runserver':
+        # Get the local IP address for network access
+        import socket
+        hostname = socket.gethostname()
+        local_ip = socket.gethostbyname(hostname)
+        
+        # Check if a specific IP/port was provided in runserver command
+        port = "8000"  # Default port
+        if len(sys.argv) > 2:
+            parts = sys.argv[2].split(":")
+            if len(parts) > 1:
+                port = parts[1]
+        
+        print("\n-------------------------------------------------------")
+        print(f"Server running at:")
+        print(f"• Local access: http://127.0.0.1:{port}/")
+        print(f"• Network access: http://{local_ip}:{port}/")
+        print("• For QR code scanning, use the Network access URL")
+        print("-------------------------------------------------------\n")
+        
     execute_from_command_line(sys.argv)
 
 

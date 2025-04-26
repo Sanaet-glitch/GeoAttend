@@ -6,34 +6,41 @@
         <h1 class="display-4 mb-4">Welcome to GeoAttend</h1>
         <p class="lead mb-5">A modern, GPS-based attendance system that makes attendance tracking simple and secure.</p>
         
-        <div class="row mt-5">
+        <div class="row justify-content-center mt-5">
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-body text-center">
                         <i class="fas fa-user-graduate fa-3x text-primary mb-3"></i>
                         <h3>Students</h3>
-                        <p>Scan the QR code shown by your faculty to mark attendance. No login required!</p>
-                        <div class="d-grid gap-2">
-                            <a href="{% url 'attendance:enroll_in_course' %}" class="btn btn-outline-primary">
-                                <i class="fas fa-sign-in-alt"></i> Enroll in a Course
-                            </a>
-                            <a href="{% url 'attendance:view_enrollments' %}" class="btn btn-outline-info">
-                                <i class="fas fa-list"></i> View My Courses
-                            </a>
-                            <a href="{% url 'attendance:student_attendance' %}" class="btn btn-outline-success">
-                                <i class="fas fa-clipboard-check"></i> Check My Attendance
-                            </a>
+                        <p>Simply scan your lecturer's QR code to mark attendance - no login required!</p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i> Enroll in courses with enrollment keys</li>
+                            <li><i class="fas fa-check text-success me-2"></i> View your course enrollments</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Check your attendance history</li>
+                            <li><i class="fas fa-check text-success me-2"></i> GPS verification for accurate attendance</li>
+                        </ul>
+                        <div class="mt-3">
+                            <p class="fw-bold">To access student features, scan a session QR code from your lecturer</p>
                         </div>
                     </div>
                 </div>
             </div>
+            
             <div class="col-md-6 mb-4">
                 <div class="card h-100">
                     <div class="card-body text-center">
                         <i class="fas fa-chalkboard-teacher fa-3x text-primary mb-3"></i>
                         <h3>Faculty</h3>
-                        <p>Create class sessions, generate QR codes, and track student attendance in real time.</p>
-                        <a href="{% url 'login' %}" class="btn btn-primary">Faculty Login</a>
+                        <p>Manage your courses and track student attendance efficiently.</p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="fas fa-check text-success me-2"></i> Create class sessions with QR codes</li>
+                            <li><i class="fas fa-check text-success me-2"></i> View real-time attendance</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Generate attendance reports</li>
+                            <li><i class="fas fa-check text-success me-2"></i> Manage course enrollments</li>
+                        </ul>
+                        <div class="mt-3">
+                            <a href="{% url 'login' %}" class="btn btn-primary">Faculty Login</a>
+                        </div>
                     </div>
                 </div>
             </div>
