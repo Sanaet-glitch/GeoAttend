@@ -1,5 +1,5 @@
 """
-WSGI config for GeoAttend project.
+WSGI config for SmartCampus project.
 """
 
 import os

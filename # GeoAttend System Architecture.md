@@ -1,72 +1,61 @@
-# GeoAttend System Architecture
+# SmartCampus System Architecture
 
 ## Overview
 
-GeoAttend is built on a modular architecture that separates concerns between student attendance, faculty management, and system administration.
+SmartCampus is a modular, web-based attendance management system for educational institutions. It focuses on secure, user-friendly, and fraud-resistant attendance tracking using QR codes and session-specific IP blocking. The system is organized into separate modules for student attendance, faculty management, and system administration.
 
 ## System Components
 
 ### Core Components
 
 1. **Session Management System**
-   - Creates class sessions with location data
-   - Generates unique QR codes for each session
+   - Faculty create class sessions for their courses
+   - System generates unique QR codes for each session
    - Manages session lifecycle (start/end)
 
-2. **Geolocation Verification System**
-   - Captures student GPS coordinates
-   - Calculates distance from class location
-   - Verifies presence within specified radius
-
-3. **Attendance Recording System**
-   - Maintains attendance records with timestamps
-   - Tracks verification method and status
-   - Prevents duplicate attendance marks
+2. **Attendance Recording System**
+   - Students mark attendance by scanning a session QR code and entering their admission number
+   - Attendance records are created with timestamps and the submitter's IP address
+   - Prevents duplicate attendance marks for the same student and session
+   - Enforces session-specific IP blocking to prevent proxy attendance (one attendance per device/network per session)
 
 ### User Interfaces
 
 1. **Faculty Dashboard**
-   - Session creation and management
-   - Real-time attendance monitoring
-   - Historical attendance reports
-   - Flagged attendance review
+   - Create and manage class sessions
+   - Monitor attendance in real time
+   - View and export attendance reports
+   - Review flagged/suspicious attendance records
 
 2. **Student Interface**
-   - QR code scanning
-   - Location permission handling
-   - Attendance confirmation
+   - Scan QR code to mark attendance (no login required)
+   - Enter admission number to confirm identity
+   - View personal attendance history and course enrollments
 
 3. **Admin Interface**
-   - User management
-   - Course setup and configuration
-   - System monitoring and reports
+   - Manage users, courses, and sessions
+   - System-wide attendance monitoring and reporting
 
 ## Data Flow
 
-1. Faculty creates a class session, capturing location coordinates
-2. System generates unique QR code for the session
-3. Student scans QR code with mobile device browser
-4. Browser requests permission to access location
-5. System verifies student location against class location
-6. If within radius, attendance is marked as verified
-7. Faculty sees real-time update on dashboard
+1. Faculty creates a class session
+2. System generates a unique QR code for the session
+3. Student scans the QR code and submits their admission number
+4. System checks for duplicate attendance and session-specific IP reuse
+5. If checks pass, attendance is recorded; otherwise, an error or flag is raised
+6. Faculty and admins can view, filter, and export attendance records
 
 ## Security Measures
 
-1. **Location Verification**
-   - GPS coordinate validation
-   - Configurable proximity radius
-   - Distance calculation with Haversine formula
+1. **Anti-Fraud Measures**
+   - Session-specific IP address tracking and blocking
+   - One attendance per student per session
+   - Automated flagging of suspicious patterns (e.g., multiple attempts from same IP)
+   - Same-network requirement: Students must be within the same network as the lecturer/faculty to mark attendance (attendance is only accepted if the student's IP matches the network of the faculty/session host)
 
-2. **Anti-Fraud Measures**
-   - IP address tracking
-   - One attendance per session
-   - Automated flagging of suspicious patterns
-
-3. **Data Protection**
+2. **Data Protection**
    - Minimal personal data collection
-   - Location data used only for verification
-   - No permanent storage of coordinates
+   - IP addresses are used only for internal validation and never exposed in reports or UI
 
 ## Database Schema
 

@@ -1,5 +1,5 @@
 """
-Django settings for GeoAttend project.
+Django settings for SmartCampus project.
 """
 
 from pathlib import Path
@@ -9,7 +9,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-geoattend-development-key-change-in-production'
+SECRET_KEY = 'django-insecure-smartcampus-development-key-change-in-production'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True

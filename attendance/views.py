@@ -51,6 +51,10 @@ def submit_attendance(request, session_key):
         data = json.loads(request.body)
         admission_number = data.get('admission_number')
         
+        # Debugging logs
+        print(f"Received session_key: {session_key}")
+        print(f"Received admission_number: {admission_number}")
+
         # Validate input
         if not admission_number:
             return JsonResponse({
@@ -78,25 +82,10 @@ def submit_attendance(request, session_key):
                 'message': 'Attendance already marked for this session for this admission number.'
             }, status=400)
         
-        # Get client IP address (handle X-Forwarded-For if behind proxy)
-        ip_address = request.META.get('HTTP_X_FORWARDED_FOR')
-        if ip_address:
-            ip_address = ip_address.split(',')[0].strip()
-        else:
-            ip_address = request.META.get('REMOTE_ADDR')
-        
-        # Check if this IP has already been used for this session
-        if AttendanceRecord.objects.filter(session=session, ip_address=ip_address).exists():
-            return JsonResponse({
-                'success': False,
-                'message': 'This device/network has already been used to mark attendance for this session.'
-            }, status=400)
-        
         # Create attendance record
         record = AttendanceRecord(
             session=session,
-            student=student,
-            ip_address=ip_address
+            student=student
         )
         record.save()
         

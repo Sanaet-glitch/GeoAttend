@@ -1,5 +1,5 @@
 """
-ASGI config for GeoAttend project.
+ASGI config for SmartCampus project.
 """
 
 import os
