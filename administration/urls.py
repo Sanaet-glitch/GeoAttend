@@ -28,4 +28,7 @@ urlpatterns = [
     path('settings/create/', views.create_setting, name='create_setting'),
     path('logs/', views.activity_logs, name='activity_logs'),
     path('attendance-records/', views.attendance_records_list, name='attendance_records_list'),
+    path('profile/', views.admin_profile, name='admin_profile'),
+    path('profile/edit/', views.edit_admin_profile, name='edit_admin_profile'),
+    path('profile/change-password/', views.change_admin_password, name='change_admin_password'),
 ]

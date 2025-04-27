@@ -54,7 +54,7 @@
                 <div class="mb-3">
                     <label class="form-label fw-bold">Attendance:</label>
                     <p>
-                        {{ attendance_count }} students
+                        <span id="attendanceCount">{{ attendance_count }}</span> students
                         {% if flagged_count > 0 %}
                             <span class="badge bg-warning text-dark">{{ flagged_count }} flagged</span>
                         {% endif %}
@@ -107,61 +107,53 @@
         </div>
     </div>
 </div>
+
+<div id="qrFullscreenModal" class="modal fade" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content bg-transparent border-0">
+      <div class="modal-body d-flex justify-content-center align-items-center" style="min-height:60vh;">
+        <img src="data:image/png;base64,{{ qr_code }}" alt="QR Code Fullscreen" class="img-fluid" style="max-height:80vh;max-width:80vw;box-shadow:0 0 32px #000;">
+      </div>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-{{ block.super }}
 <script>
-    // Fullscreen QR code functionality
-    document.getElementById('fullscreenBtn').addEventListener('click', function() {
-        // Create fullscreen overlay
-        const overlay = document.createElement('div');
-        overlay.style.position = 'fixed';
-        overlay.style.top = '0';
-        overlay.style.left = '0';
-        overlay.style.width = '100%';
-        overlay.style.height = '100%';
-        overlay.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
-        overlay.style.zIndex = '9999';
-        overlay.style.display = 'flex';
-        overlay.style.justifyContent = 'center';
-        overlay.style.alignItems = 'center';
-        overlay.style.flexDirection = 'column';
-        
-        // Create QR code container
-        const qrContainer = document.createElement('div');
-        qrContainer.innerHTML = '<img src="data:image/png;base64,{{ qr_code }}" style="max-height: 80vh; max-width: 80vw;">';
-        
-        // Create close button
-        const closeBtn = document.createElement('button');
-        closeBtn.innerText = 'Close';
-        closeBtn.className = 'btn btn-primary mt-4';
-        closeBtn.addEventListener('click', function() {
-            document.body.removeChild(overlay);
-        });
-        
-        // Add elements to overlay
-        overlay.appendChild(qrContainer);
-        overlay.appendChild(closeBtn);
-        
-        // Add overlay to body
-        document.body.appendChild(overlay);
-        
-        // Also close on ESC key press
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && document.body.contains(overlay)) {
-                document.body.removeChild(overlay);
-            }
-        });
-    });
-
-    function fetchAttendanceRecords() {
+    function refreshAttendanceCount() {
+        fetch("{% url 'faculty:attendance_count_api' session.id %}", { credentials: 'same-origin' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.attendance_count !== undefined) {
+                    document.getElementById('attendanceCount').textContent = data.attendance_count;
+                }
+            });
+    }
+    function refreshAttendanceRecords() {
         fetch("{% url 'faculty:attendance_records_partial' session.id %}", { credentials: 'same-origin' })
             .then(response => response.text())
             .then(html => {
                 document.getElementById('attendance-records-table').innerHTML = html;
             });
     }
-    setInterval(fetchAttendanceRecords, 5000);
+    setInterval(function() {
+        refreshAttendanceCount();
+        refreshAttendanceRecords();
+    }, 5000);
+
+    // Custom overlay/modal fullscreen QR code
+    document.addEventListener('DOMContentLoaded', function() {
+        var fullscreenBtn = document.getElementById('fullscreenBtn');
+        var qrModal = document.getElementById('qrFullscreenModal');
+        if (fullscreenBtn && qrModal) {
+            fullscreenBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                var modal = new bootstrap.Modal(qrModal);
+                modal.show();
+            });
+        }
+    });
 </script>
 {% endblock %}

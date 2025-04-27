@@ -362,3 +362,22 @@ def attendance_records_partial(request, session_id):
     return render(request, 'faculty/attendance_records_partial.html', {
         'attendance_records': attendance_records
     })
+
+@login_required
+def faculty_profile(request):
+    faculty_profile = None
+    if hasattr(request.user, 'facultyprofile'):
+        faculty_profile = request.user.facultyprofile
+    context = {
+        'faculty': faculty_profile,
+        'user': request.user,
+    }
+    return render(request, 'faculty/profile.html', context)
+
+@login_required
+def attendance_count_api(request, session_id):
+    session = get_object_or_404(ClassSession, id=session_id)
+    if session.faculty != request.user:
+        return JsonResponse({'error': "You don't have permission."}, status=403)
+    count = AttendanceRecord.objects.filter(session=session).count()
+    return JsonResponse({'attendance_count': count})

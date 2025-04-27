@@ -7,6 +7,8 @@ from django.http import JsonResponse, HttpResponse
 from django.utils import timezone
 import csv
 import io
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 from .models import SystemSettings, AdminLog, StudentImportLog
 from core.models import Course, ClassSession
@@ -803,3 +805,53 @@ def edit_faculty(request, faculty_id):
         'faculty': faculty,
     }
     return render(request, 'administration/edit_faculty.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def admin_profile(request):
+    """Display the profile of the currently logged-in admin user."""
+    user = request.user
+    # Optionally, show recent admin activity logs
+    recent_logs = AdminLog.objects.filter(admin=user).order_by('-timestamp')[:10]
+    context = {
+        'user': user,
+        'recent_logs': recent_logs,
+    }
+    return render(request, 'administration/admin_profile.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def edit_admin_profile(request):
+    user = request.user
+    if request.method == 'POST':
+        first_name = request.POST.get('first_name')
+        last_name = request.POST.get('last_name')
+        email = request.POST.get('email')
+        if not all([first_name, last_name, email]):
+            messages.error(request, 'Please fill in all required fields.')
+            return redirect('administration:edit_admin_profile')
+        user.first_name = first_name
+        user.last_name = last_name
+        user.email = email
+        user.save()
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('administration:admin_profile')
+    context = {'user': user}
+    return render(request, 'administration/edit_admin_profile.html', context)
+
+@login_required
+@user_passes_test(is_admin)
+def change_admin_password(request):
+    user = request.user
+    if request.method == 'POST':
+        form = PasswordChangeForm(user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Password changed successfully.')
+            return redirect('administration:admin_profile')
+        else:
+            messages.error(request, 'Please correct the errors below.')
+    else:
+        form = PasswordChangeForm(user)
+    return render(request, 'administration/change_admin_password.html', {'form': form})
