@@ -18,6 +18,7 @@ class AttendanceRecord(models.Model):
     
     # Verification data
     timestamp = models.DateTimeField(default=timezone.now)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)  # Internal use only
     
     # Status information
     is_verified = models.BooleanField(default=True)
