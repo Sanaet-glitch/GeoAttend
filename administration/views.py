@@ -1,3 +1,9 @@
+"""
+Views for the administration app.
+Handles admin dashboard, faculty, course, student, settings, logs, and profile management.
+Includes detailed docstrings and inline comments for clarity.
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.contrib.auth.models import User
@@ -32,7 +38,7 @@ def log_admin_action(request, action, object_type, object_id=None, details=None)
 @login_required
 @user_passes_test(is_admin)
 def dashboard(request):
-    """Admin dashboard with system overview"""
+    """Admin dashboard with system overview and recent activity."""
     # Count records
     student_count = Student.objects.count()
     course_count = Course.objects.count()
@@ -89,7 +95,7 @@ def dashboard(request):
 @login_required
 @user_passes_test(is_admin)
 def faculty_list(request):
-    """Manage faculty users"""
+    """Display and manage all faculty users."""
     faculties = FacultyProfile.objects.all().select_related('user')
     
     # Calculate course assignments for each faculty

@@ -1,3 +1,8 @@
+"""
+URL configuration for the core app.
+Maps core views to URL patterns for the home page and enrollment key management.
+"""
+
 from django.urls import path
 from . import views
 

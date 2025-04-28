@@ -1,9 +1,14 @@
+"""
+Models for the administration app.
+Defines system settings, admin logs, and student import logs.
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 
 class SystemSettings(models.Model):
-    """Global system configuration settings"""
+    """Global system configuration settings for the SmartCampus system."""
     setting_key = models.CharField(max_length=100, unique=True)
     setting_value = models.TextField()
     description = models.TextField(blank=True)
@@ -14,7 +19,7 @@ class SystemSettings(models.Model):
         return self.setting_key
 
 class AdminLog(models.Model):
-    """Log of administrative actions"""
+    """Log of administrative actions for auditing and traceability."""
     ACTION_CHOICES = [
         ('CREATE', 'Create'),
         ('UPDATE', 'Update'),
@@ -40,7 +45,7 @@ class AdminLog(models.Model):
         return f"{self.admin} - {self.action} {self.object_type} - {self.timestamp}"
 
 class StudentImportLog(models.Model):
-    """Record of student data imports"""
+    """Record of student data imports for tracking bulk operations and errors."""
     STATUS_CHOICES = [
         ('PENDING', 'Pending'),
         ('PROCESSING', 'Processing'),

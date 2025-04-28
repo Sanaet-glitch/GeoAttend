@@ -1,3 +1,9 @@
+"""
+Views for the core app.
+Handles the home page, error handlers, enrollment key management, and user redirection based on role.
+Includes detailed docstrings and inline comments for clarity.
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -7,7 +13,7 @@ from datetime import datetime
 from .models import Course, EnrollmentKey
 
 def index(request):
-    """Home page view"""
+    """Home page view. Redirects authenticated users to their respective dashboards."""
     if request.user.is_authenticated:
         # If user is admin, redirect to admin dashboard first
         if request.user.is_staff or request.user.is_superuser:
@@ -19,9 +25,11 @@ def index(request):
     return render(request, 'core/index.html')
 
 def handler404(request, exception=None):
+    """Custom 404 error handler."""
     return render(request, 'core/404.html', status=404)
 
 def handler500(request):
+    """Custom 500 error handler."""
     return render(request, 'core/500.html', status=500)
 
 @login_required

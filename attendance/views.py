@@ -1,3 +1,9 @@
+"""
+Views for the attendance app.
+Handles student attendance marking, submission, enrollment, and attendance record viewing.
+Includes detailed docstrings and inline comments for clarity.
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.contrib import messages
@@ -10,7 +16,7 @@ from .models import Student, AttendanceRecord
 from core.models import ClassSession, Course, Enrollment, EnrollmentKey
 
 def mark_attendance_form(request, session_key):
-    """Display form for students to mark attendance"""
+    """Display form for students to mark attendance for a session."""
     try:
         # Try to get an active session with the given key
         session = ClassSession.objects.get(session_key=session_key, is_active=True)
@@ -35,7 +41,7 @@ def mark_attendance_form(request, session_key):
 @csrf_exempt
 @require_POST
 def submit_attendance(request, session_key):
-    """Process attendance submission"""
+    """Process attendance submission for a session by a student."""
     try:
         # Get session
         session = get_object_or_404(ClassSession, session_key=session_key, is_active=True)
@@ -112,13 +118,13 @@ def submit_attendance(request, session_key):
         }, status=500)
 
 def api_mark_attendance(request, session_key):
-    """API endpoint for attendance marking (GET only for now)"""
+    """API endpoint for attendance marking (GET only for now)."""
     if request.method == 'GET':
         return JsonResponse({'detail': 'API endpoint is reachable. Use POST to submit attendance.'})
     return JsonResponse({'detail': 'Method not allowed.'}, status=405)
 
 def enroll_in_course(request):
-    """Allow students to enroll in courses using an enrollment key"""
+    """Allow students to enroll in courses using an enrollment key."""
     if request.method == 'POST':
         admission_number = request.POST.get('admission_number')
         enrollment_key = request.POST.get('enrollment_key')
@@ -128,7 +134,11 @@ def enroll_in_course(request):
             return redirect('attendance:enroll_in_course')
         
         # Get student
-        student = get_object_or_404(Student, admission_number=admission_number)
+        try:
+            student = Student.objects.get(admission_number=admission_number)
+        except Student.DoesNotExist:
+            messages.error(request, 'No student found with the provided admission number. Please check and try again, or contact your admin if you need help.')
+            return redirect('attendance:enroll_in_course')
         
         # Verify enrollment key
         try:
@@ -165,7 +175,7 @@ def enroll_in_course(request):
     return render(request, 'attendance/enroll_in_course.html')
 
 def view_enrollments(request):
-    """Allow students to view which courses they are enrolled in"""
+    """Allow students to view which courses they are enrolled in."""
     enrollments = None
     student = None
     
@@ -189,7 +199,7 @@ def view_enrollments(request):
     })
 
 def student_attendance(request):
-    """Allow students to view their attendance records for enrolled courses"""
+    """Allow students to view their attendance records for enrolled courses."""
     attendance_records = None
     student = None
     filter_course = None

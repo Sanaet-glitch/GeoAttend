@@ -1,3 +1,8 @@
+"""
+URL configuration for the faculty app.
+Maps faculty-related views to URL patterns for dashboard, session management, attendance, and reports.
+"""
+
 from django.urls import path
 from . import views
 

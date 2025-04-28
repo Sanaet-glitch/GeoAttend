@@ -1,3 +1,8 @@
+"""
+Models for the faculty app.
+Defines FacultyProfile and CourseAssignment models for faculty and course management.
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 from core.models import Course

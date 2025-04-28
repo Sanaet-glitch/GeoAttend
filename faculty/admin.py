@@ -1,3 +1,8 @@
+"""
+Django admin configuration for the faculty app.
+Registers faculty-related models and customizes their admin interface.
+"""
+
 from django.contrib import admin
 from .models import FacultyProfile, CourseAssignment
 

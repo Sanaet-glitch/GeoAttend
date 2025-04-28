@@ -1,3 +1,9 @@
+"""
+Views for the faculty app.
+Handles faculty dashboard, session management, attendance tracking, and reporting.
+Includes detailed docstrings and inline comments for clarity.
+"""
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.utils import timezone
@@ -20,7 +26,7 @@ def is_admin(user):
 
 @login_required
 def dashboard(request):
-    """Faculty dashboard showing courses and recent sessions"""
+    """Faculty dashboard with overview of sessions and courses."""
     # Get or create faculty profile
     faculty_profile, created = FacultyProfile.objects.get_or_create(
         user=request.user,
@@ -52,7 +58,7 @@ def dashboard(request):
 
 @login_required
 def session_list(request):
-    """List all sessions for the faculty member"""
+    """List all sessions created by the faculty member."""
     # Get or create faculty profile
     faculty_profile, created = FacultyProfile.objects.get_or_create(
         user=request.user,
@@ -117,7 +123,7 @@ def session_list(request):
 
 @login_required
 def create_session(request):
-    """Create a new class session"""
+    """Create a new class session for a course."""
     # Get or create faculty profile
     faculty_profile, created = FacultyProfile.objects.get_or_create(
         user=request.user,
@@ -166,7 +172,7 @@ def create_session(request):
 
 @login_required
 def session_detail(request, session_id):
-    """View details of a specific session, including attendance records"""
+    """View details and attendance for a specific session."""
     # Get or create faculty profile
     faculty_profile, created = FacultyProfile.objects.get_or_create(
         user=request.user,
@@ -195,7 +201,7 @@ def session_detail(request, session_id):
 
 @login_required
 def edit_session(request, session_id):
-    """Edit an existing class session"""
+    """Edit details of an existing session."""
     # Get or create faculty profile
     faculty_profile, created = FacultyProfile.objects.get_or_create(
         user=request.user,
@@ -240,8 +246,16 @@ def edit_session(request, session_id):
     return render(request, 'faculty/edit_session.html', context)
 
 @login_required
+def delete_session(request, session_id):
+    """Delete a session created by the faculty member."""
+    session = get_object_or_404(ClassSession, id=session_id, faculty=request.user)
+    session.delete()
+    messages.success(request, 'Session deleted successfully.')
+    return redirect('faculty:session_list')
+
+@login_required
 def attendance_report(request, session_id):
-    """Generate attendance report for a session"""
+    """Generate and display attendance report for a session."""
     # Get session
     session = get_object_or_404(ClassSession, id=session_id)
     
@@ -286,16 +300,28 @@ def attendance_report(request, session_id):
     return response
 
 @login_required
-def delete_session(request, session_id):
-    """Delete a specific class session"""
-    session = get_object_or_404(ClassSession, id=session_id, faculty=request.user)
-    session.delete()
-    messages.success(request, 'Session deleted successfully.')
-    return redirect('faculty:session_list')
+def attendance_records_partial(request, session_id):
+    """Return partial HTML for attendance records (AJAX updates)."""
+    session = get_object_or_404(ClassSession, id=session_id)
+    if session.faculty != request.user:
+        return HttpResponseForbidden("You don't have permission to view this session")
+    attendance_records = AttendanceRecord.objects.filter(session=session)
+    return render(request, 'faculty/attendance_records_partial.html', {
+        'attendance_records': attendance_records
+    })
+
+@login_required
+def attendance_count_api(request, session_id):
+    """API endpoint to get attendance count for a session."""
+    session = get_object_or_404(ClassSession, id=session_id)
+    if session.faculty != request.user:
+        return JsonResponse({'error': "You don't have permission."}, status=403)
+    count = AttendanceRecord.objects.filter(session=session).count()
+    return JsonResponse({'attendance_count': count})
 
 @login_required
 def course_enrollments(request, course_id):
-    """View students enrolled in a specific course and approve/reject pending enrollments"""
+    """View enrollments for a specific course."""
     course = get_object_or_404(Course, id=course_id, lecturers=request.user)
     
     if request.method == 'POST':
@@ -336,7 +362,7 @@ def course_enrollments(request, course_id):
 @login_required
 @user_passes_test(is_admin)
 def delete_course_assignment(request, assignment_id):
-    """Delete a specific course assignment for a faculty member."""
+    """Delete a course assignment for the faculty member."""
     assignment = get_object_or_404(CourseAssignment, id=assignment_id)
     assignment.delete()
 
@@ -353,18 +379,8 @@ def delete_course_assignment(request, assignment_id):
     return redirect('administration:faculty_detail', faculty_id=assignment.faculty.id)
 
 @login_required
-def attendance_records_partial(request, session_id):
-    """Return the attendance records table as an HTML fragment for AJAX refresh."""
-    session = get_object_or_404(ClassSession, id=session_id)
-    if session.faculty != request.user:
-        return HttpResponseForbidden("You don't have permission to view this session")
-    attendance_records = AttendanceRecord.objects.filter(session=session)
-    return render(request, 'faculty/attendance_records_partial.html', {
-        'attendance_records': attendance_records
-    })
-
-@login_required
 def faculty_profile(request):
+    """View and edit the faculty member's profile."""
     faculty_profile = None
     if hasattr(request.user, 'facultyprofile'):
         faculty_profile = request.user.facultyprofile
@@ -373,11 +389,3 @@ def faculty_profile(request):
         'user': request.user,
     }
     return render(request, 'faculty/profile.html', context)
-
-@login_required
-def attendance_count_api(request, session_id):
-    session = get_object_or_404(ClassSession, id=session_id)
-    if session.faculty != request.user:
-        return JsonResponse({'error': "You don't have permission."}, status=403)
-    count = AttendanceRecord.objects.filter(session=session).count()
-    return JsonResponse({'attendance_count': count})

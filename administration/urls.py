@@ -1,3 +1,8 @@
+"""
+URL configuration for the administration app.
+Maps admin-related views to URL patterns for dashboard, faculty, courses, students, settings, logs, and profile management.
+"""
+
 from django.urls import path
 from . import views
 

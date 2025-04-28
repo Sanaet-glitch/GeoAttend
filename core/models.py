@@ -1,3 +1,8 @@
+"""
+Models for the core app.
+Defines Course, ClassSession, EnrollmentKey, and Enrollment models for course and session management.
+"""
+
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone

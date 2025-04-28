@@ -1,3 +1,8 @@
+"""
+URL configuration for the attendance app.
+Maps attendance-related views to URL patterns for marking, submitting, enrolling, and viewing attendance.
+"""
+
 from django.urls import path
 from . import views
 
